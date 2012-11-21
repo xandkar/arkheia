@@ -2,25 +2,20 @@ open Batteries
 
 
 module GZ = struct include Gzip
-  let write_line (oc : out_channel) (line : string) : unit =
+  let output_line (oc : out_channel) (line : string) : unit =
     String.iteri (fun _ c -> output_char oc c) line;
     output_char oc '\n'
 
 
-  let read_line (ic : in_channel) : string =
+  let input_line (ic : in_channel) : string =
     let expected_chars = 210 in  (* Average number of chars per log line *)
     let buffer = Buffer.create expected_chars in
-    let rec read_line = function
+    let rec input_line = function
       | '\n' -> Buffer.contents buffer
       |   c  -> Buffer.add_char buffer c;
-                read_line (input_char ic)
+                input_line (input_char ic)
     in
-    read_line (input_char ic)
-
-
-  let stream_lines (path : string) : string Stream.t =
-    let ic = open_in path in
-    Stream.from (fun _ -> try Some (read_line ic) with _ -> close_in ic; None)
+    input_line (input_char ic)
 end
 
 
@@ -45,7 +40,17 @@ module Mbox = struct
 
 
   let msg_stream filename =
-    let line_stream = GZ.stream_lines filename in
+    let line_stream =
+      if Filename.check_suffix filename ".gz" then
+        let ic = GZ.open_in filename in
+        Stream.from
+        (fun _ -> try Some (GZ.input_line ic) with _ -> GZ.close_in ic; None)
+
+      else
+        let ic = open_in filename in
+        Stream.from
+        (fun _ -> try Some (input_line ic) with _ -> close_in ic; None)
+    in
     Stream.from (fun _ -> read_msg line_stream)
 end
 
@@ -75,6 +80,7 @@ end
 
 let main () =
   let o = Options.parse () in
+  let mbox = Mbox.msg_stream o.Options.mbox_file in
 
   let bar = String.make 80 '=' in
 
@@ -85,7 +91,7 @@ let main () =
       (fun m -> print_endline (dump m))
       msg
   )
-  (Mbox.msg_stream o.Options.mbox_file)
+  mbox
 
 
 let () = main ()
