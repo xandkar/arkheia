@@ -19,6 +19,28 @@ module GZ = struct include Gzip
 end
 
 
+module Msg = struct
+  type t =
+    { headers : string list
+    ; body    : string list
+    }
+
+
+  type section =
+    Header | Body
+
+
+  let parse (lines : string list) : t =
+    let rec parse hs bs = function
+      | Header, [] | Body, [] -> {headers = List.rev hs; body = List.rev bs}
+      | Header, ""::lines -> parse     hs     bs  (Body,   lines)
+      | Header,  h::lines -> parse (h::hs)    bs  (Header, lines)
+      | Body,    b::lines -> parse     hs (b::bs) (Header, lines)
+    in
+    parse [] [] (Header, lines)
+end
+
+
 module Mbox = struct
   let regexp_from = Str.regexp "^From\ +"
 
@@ -29,8 +51,8 @@ module Mbox = struct
 
   let read_msg s =
     let rec read msg' = match Stream.peek s with
-      | None -> List.rev msg'
-      | Some line when is_msg_start line -> List.rev msg'
+      | None -> Msg.parse (List.rev msg')
+      | Some line when is_msg_start line -> Msg.parse (List.rev msg')
       | Some line -> Stream.junk s; read (line::msg')
     in
     match Stream.peek s with
@@ -87,9 +109,8 @@ let main () =
   Stream.iter
   ( fun msg ->
       print_endline bar;
-      List.iter
-      (fun m -> print_endline (dump m))
-      msg
+      print_endline (dump msg);
+      print_newline ()
   )
   mbox
 
