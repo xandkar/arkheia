@@ -1,6 +1,32 @@
 open Batteries
 
 
+module RegExp = struct
+  let header_tag = Str.regexp "^[a-zA-Z-_]+: "
+  let header_data = Str.regexp "^[ \t]+"
+  let top_from =
+    let space = " +" in
+    let from = "^From" in
+    let username = ".+" in
+    let weekday = "[A-Z][a-z][a-z]" in
+    let month = "[A-Z][a-z][a-z]" in
+    let day = "[0-9]+" in
+    let time = "[0-9][0-9]:[0-9][0-9]:[0-9][0-9]" in
+    let year = "[0-9][0-9][0-9][0-9]$" in
+    Str.regexp
+    ( String.concat space
+      [ from
+      ; username
+      ; weekday
+      ; month
+      ; day
+      ; time
+      ; year
+      ]
+    )
+end
+
+
 module GZ = struct include Gzip
   let output_line (oc : out_channel) (line : string) : unit =
     String.iteri (fun _ c -> output_char oc c) line;
@@ -28,11 +54,8 @@ module Msg = struct
   type section =
     Header | Body
 
-  let regexp_head_tag = Str.regexp "^[a-zA-Z-_]+: "
-  let regexp_head_dat = Str.regexp "^[ \t]+"
-
-  let is_head_tag l = Str.string_match regexp_head_tag l 0
-  let is_head_dat l = Str.string_match regexp_head_dat l 0
+  let is_head_tag l = Str.string_match RegExp.header_tag l 0
+  let is_head_dat l = Str.string_match RegExp.header_data l 0
 
   let parse (lines : string list) : t =
     let rec parse h hs bs = function
@@ -49,27 +72,8 @@ end
 
 
 module Mbox = struct
-  let regexp_from =
-    let space = " +" in
-    let weekday = "[A-Z][a-z][a-z]" in
-    let month = "[A-Z][a-z][a-z]" in
-    let day = "[0-9]+" in
-    let time = "[0-9][0-9]:[0-9][0-9]:[0-9][0-9]" in
-    let year = "[0-9][0-9][0-9][0-9]$" in
-    Str.regexp
-    ( String.concat space
-      [ "^From .+"
-      ; weekday
-      ; month
-      ; day
-      ; time
-      ; year
-      ]
-    )
-
-
   let is_msg_start l =
-    Str.string_match regexp_from l 0
+    Str.string_match RegExp.top_from l 0
 
 
   let read_msg s =
