@@ -4,7 +4,7 @@ OBJ_EXT="cmx"
 
 
 compile:
-	@ocamlfind $(COMPILER) -package batteries -linkpkg \
+	@ocamlfind $(COMPILER) -package batteries,zip -linkpkg \
 		-o bin/$(EXECUTABLE_NAME) \
 		src/mldb.ml
 
