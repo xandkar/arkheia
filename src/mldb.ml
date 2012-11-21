@@ -47,7 +47,7 @@ end
 
 module Msg = struct
   type t =
-    { headers : string list
+    { headers : (string * string) list
     ; body    : string list
     }
 
@@ -58,10 +58,18 @@ module Msg = struct
   let is_head_dat l = Str.string_match RegExp.header_data l 0
 
   let parse (lines : string list) : t =
+    let parse_header h =
+      if (Str.string_match RegExp.top_from h 0) then
+        "top_from", h
+      else
+        match Str.full_split RegExp.header_tag h with
+        | [Str.Delim tag; Str.Text data] -> tag, data
+        | _ -> print_endline h; assert false
+    in
     let rec parse h hs bs = function
       | Header, [] | Body, [] -> {headers = List.rev hs; body = List.rev bs}
-      | Header,  ""::ls                    -> parse "" (h::hs) bs (Body, ls)
-      | Header,   l::ls when is_head_tag l -> parse l (h::hs) bs (Header, ls)
+      | Header,  ""::ls -> parse "" ((parse_header h)::hs) bs (Body, ls)
+      | Header,   l::ls when is_head_tag l -> parse l ((parse_header h)::hs) bs (Header, ls)
       | Header,   l::ls when is_head_dat l -> parse (h^l) hs bs (Header, ls)
       | Header,   l::ls -> assert false
       | Body,     l::ls -> parse h hs (l::bs) (Body, ls)
@@ -143,7 +151,7 @@ let main () =
       print_endline bar_minor;
       print_endline "| HEADERS";
       print_endline bar_minor;
-      List.iter (fun h -> print_endline h) msg.Msg.headers;
+      List.iter (fun h -> print_endline (dump h)) msg.Msg.headers;
 
       print_endline bar_minor;
       print_endline "| BODY";
