@@ -25,24 +25,47 @@ module Msg = struct
     ; body    : string list
     }
 
-
   type section =
     Header | Body
 
+  let regexp_head_tag = Str.regexp "^[a-zA-Z-_]+: "
+  let regexp_head_dat = Str.regexp "^[ \t]+"
+
+  let is_head_tag l = Str.string_match regexp_head_tag l 0
+  let is_head_dat l = Str.string_match regexp_head_dat l 0
 
   let parse (lines : string list) : t =
-    let rec parse hs bs = function
+    let rec parse h hs bs = function
       | Header, [] | Body, [] -> {headers = List.rev hs; body = List.rev bs}
-      | Header, ""::lines -> parse     hs     bs  (Body,   lines)
-      | Header,  h::lines -> parse (h::hs)    bs  (Header, lines)
-      | Body,    b::lines -> parse     hs (b::bs) (Header, lines)
+      | Header,  ""::ls                    -> parse "" (h::hs) bs (Body, ls)
+      | Header,   l::ls when is_head_tag l -> parse l (h::hs) bs (Header, ls)
+      | Header,   l::ls when is_head_dat l -> parse (h^l) hs bs (Header, ls)
+      | Header,   l::ls -> assert false
+      | Body,     l::ls -> parse h hs (l::bs) (Body, ls)
     in
-    parse [] [] (Header, lines)
+    let h, lines = match lines with l::ls -> l, ls | _ -> assert false in
+    parse h [] [] (Header, lines)
 end
 
 
 module Mbox = struct
-  let regexp_from = Str.regexp "^From\ +"
+  let regexp_from =
+    let space = " +" in
+    let weekday = "[A-Z][a-z][a-z]" in
+    let month = "[A-Z][a-z][a-z]" in
+    let day = "[0-9]+" in
+    let time = "[0-9][0-9]:[0-9][0-9]:[0-9][0-9]" in
+    let year = "[0-9][0-9][0-9][0-9]$" in
+    Str.regexp
+    ( String.concat space
+      [ "^From .+"
+      ; weekday
+      ; month
+      ; day
+      ; time
+      ; year
+      ]
+    )
 
 
   let is_msg_start l =
@@ -104,12 +127,25 @@ let main () =
   let o = Options.parse () in
   let mbox = Mbox.msg_stream o.Options.mbox_file in
 
-  let bar = String.make 80 '=' in
+  let bar_major = String.make 80 '=' in
+  let bar_minor = String.make 80 '-' in
 
   Stream.iter
   ( fun msg ->
-      print_endline bar;
-      print_endline (dump msg);
+      print_endline bar_major;
+      print_endline "| MSG";
+      print_endline bar_major;
+
+      print_endline bar_minor;
+      print_endline "| HEADERS";
+      print_endline bar_minor;
+      List.iter (fun h -> print_endline h) msg.Msg.headers;
+
+      print_endline bar_minor;
+      print_endline "| BODY";
+      print_endline bar_minor;
+      List.iter print_endline msg.Msg.body;
+
       print_newline ()
   )
   mbox
