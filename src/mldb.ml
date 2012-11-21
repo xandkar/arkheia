@@ -79,7 +79,7 @@ module Mbox = struct
       | Some line -> Stream.junk s; read (line::msg')
     in
     match Stream.peek s with
-    | None -> None
+    | None -> Stream.junk s; None
     | Some line when is_msg_start line -> Stream.junk s; Some (read [line])
     | Some _ -> assert false
 
