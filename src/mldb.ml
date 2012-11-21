@@ -8,7 +8,7 @@ module GZ = struct include Gzip
 
 
   let input_line (ic : in_channel) : string =
-    let expected_chars = 210 in  (* Average number of chars per log line *)
+    let expected_chars = 100 in
     let buffer = Buffer.create expected_chars in
     let rec input_line = function
       | '\n' -> Buffer.contents buffer
