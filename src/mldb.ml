@@ -82,7 +82,7 @@ module Msg = struct
         |> Str.replace_first (Str.regexp "^<") ""
         |> Str.replace_first (Str.regexp ">$") ""
         |> Str.split (Str.regexp ">[ \n]+<")
-        |> List.map (Str.replace_first (Str.regexp "[ \n\t]+") "")
+        |> List.map (Str.global_replace (Str.regexp "[ \n\t]+") "")
         |> String.concat "|"
       in
       let rec validate hs' = function
