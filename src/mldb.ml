@@ -77,6 +77,14 @@ module Msg = struct
         try Scanf.sscanf id "<%s@>" (fun id -> id)
         with e -> print_endline id; print_endline (dump e); assert false
       in
+      let clean_ids data =
+        data
+        |> Str.replace_first (Str.regexp "^<") ""
+        |> Str.replace_first (Str.regexp ">$") ""
+        |> Str.split (Str.regexp ">[ \n]+<")
+        |> List.map (Str.replace_first (Str.regexp "[ \n\t]+") "")
+        |> String.concat "|"
+      in
       let rec validate hs' = function
         |                                [] -> hs'
         | (("TOP_FROM",     data) as h)::hs -> validate (h::hs') hs
@@ -84,7 +92,7 @@ module Msg = struct
         | (("Date:",        data) as h)::hs -> validate (h::hs') hs
         | (("Subject:",     data) as h)::hs -> validate (h::hs') hs
         | (("In-Reply-To:", data) as h)::hs -> validate (h::hs') hs
-        | (("References:",  data) as h)::hs -> validate (h::hs') hs
+        | ("References:"  as t, d)::hs -> validate ((t, clean_ids d)::hs') hs
         | ("Message-ID:"  as t, d)::hs -> validate ((t, clean_id  d)::hs') hs
 
         | h::_ -> print_endline (dump h); assert false
@@ -177,6 +185,8 @@ let main () =
 
   let bar_major = String.make 80 '=' in
   let bar_minor = String.make 80 '-' in
+  bar_major.[0] <- '+';
+  bar_minor.[0] <- '+';
 
   Stream.iter
   ( fun msg ->
