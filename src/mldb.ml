@@ -2,8 +2,11 @@ open Batteries
 
 
 module RegExp = struct
+  let space = Str.regexp " +"
+  let space_leading = Str.regexp "^ +"
+  let space_trailing = Str.regexp " +$"
+
   let top_from =
-    let space = " +" in
     let from = "^From" in
     let username = ".+" in
     let weekday = "[A-Z][a-z][a-z]" in
@@ -12,7 +15,7 @@ module RegExp = struct
     let time = "[0-9][0-9]:[0-9][0-9]:[0-9][0-9]" in
     let year = "[0-9][0-9][0-9][0-9]$" in
     Str.regexp
-    ( String.concat space
+    ( String.concat " +"
       [ from
       ; username
       ; weekday
@@ -22,10 +25,9 @@ module RegExp = struct
       ; year
       ]
     )
+
   let header_tag = Str.regexp "^[a-zA-Z-_]+: "
   let header_data = Str.regexp "^[ \t]+"
-  let space_leading = Str.regexp "^ +"
-  let space_trailing = Str.regexp " +$"
 end
 
 
@@ -71,6 +73,10 @@ module Msg = struct
 
   let parse (lines : string list) : t =
     let validate hs =
+      let clean_id id =
+        try Scanf.sscanf id "<%s@>" (fun id -> id)
+        with e -> print_endline id; print_endline (dump e); assert false
+      in
       let rec validate hs' = function
         |                                [] -> hs'
         | (("TOP_FROM",     data) as h)::hs -> validate (h::hs') hs
@@ -79,9 +85,9 @@ module Msg = struct
         | (("Subject:",     data) as h)::hs -> validate (h::hs') hs
         | (("In-Reply-To:", data) as h)::hs -> validate (h::hs') hs
         | (("References:",  data) as h)::hs -> validate (h::hs') hs
-        | (("Message-ID:",  data) as h)::hs -> validate (h::hs') hs
-        |                             h::hs -> print_endline (dump h);
-                                               assert false
+        | ("Message-ID:"  as t, d)::hs -> validate ((t, clean_id  d)::hs') hs
+
+        | h::_ -> print_endline (dump h); assert false
       in
       validate [] hs
     in
@@ -90,7 +96,7 @@ module Msg = struct
         "TOP_FROM", h
       else
         match Str.full_split RegExp.header_tag h with
-        | [Str.Delim tag; Str.Text data] -> Str.strip tag, data
+        | [Str.Delim tag; Str.Text data] -> Str.strip tag, Str.strip data
         | _ -> print_endline h; assert false
     in
     let rec parse h hs bs = function
