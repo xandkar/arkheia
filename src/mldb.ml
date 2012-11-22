@@ -102,11 +102,11 @@ module Msg = struct
     in
     let rec parse h hs bs = function
       | Header, [] | Body, [] -> {headers=pack_headers hs; body=List.rev bs}
-      | Header,  ""::ls -> parse "" ((parse_header h)::hs) bs (Body, ls)
-      | Header,   l::ls when is_head_tag l -> parse l ((parse_header h)::hs) bs (Header, ls)
-      | Header,   l::ls when is_head_dat l -> parse (h^l) hs bs (Header, ls)
-      | Header,   l::ls -> assert false
-      | Body,     l::ls -> parse h hs (l::bs) (Body, ls)
+      | Header, ""::ls -> parse "" ((parse_header h)::hs) bs (Body, ls)
+      | Header,  l::ls when is_head_tag l -> parse l ((parse_header h)::hs) bs (Header, ls)
+      | Header,  l::ls when is_head_dat l -> parse (h^l) hs bs (Header, ls)
+      | Header,  l::ls -> assert false
+      | Body,    l::ls -> parse h hs (l::bs) (Body, ls)
     in
     let h, lines = match lines with l::ls -> l, ls | _ -> assert false in
     parse h [] [] (Header, lines)
