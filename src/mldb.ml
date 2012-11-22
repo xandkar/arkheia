@@ -2,8 +2,6 @@ open Batteries
 
 
 module RegExp = struct
-  let header_tag = Str.regexp "^[a-zA-Z-_]+: "
-  let header_data = Str.regexp "^[ \t]+"
   let top_from =
     let space = " +" in
     let from = "^From" in
@@ -24,6 +22,17 @@ module RegExp = struct
       ; year
       ]
     )
+  let header_tag = Str.regexp "^[a-zA-Z-_]+: "
+  let header_data = Str.regexp "^[ \t]+"
+  let space_leading = Str.regexp "^ +"
+  let space_trailing = Str.regexp " +$"
+end
+
+
+module Str = struct include Str
+  let strip s = s
+    |> replace_first RegExp.space_leading ""
+    |> replace_first RegExp.space_trailing ""
 end
 
 
@@ -46,70 +55,57 @@ end
 
 
 module Msg = struct
-  type headers =
-    { top_from    : string
-    ; from        : string
-    ; date        : string
-    ; subject     : string
-    ; in_reply_to : string
-    ; references  : string
-    ; message_id  : string
-    }
+  type header =
+    string * string
 
   type t =
-    { headers : headers
+    { headers : header list
     ; body    : string list
     }
 
   type section =
-    Header | Body
+    Headers | Body
 
   let is_head_tag l = Str.string_match RegExp.header_tag l 0
   let is_head_dat l = Str.string_match RegExp.header_data l 0
 
   let parse (lines : string list) : t =
-    let pack_headers hs =
-      let rec pack ht = function
-        |                          [] -> ht
-        | ("top_from",      data)::hs -> pack {ht with top_from    = data} hs
-        | ("From: ",        data)::hs -> pack {ht with from        = data} hs
-        | ("Date: ",        data)::hs -> pack {ht with date        = data} hs
-        | ("Subject: ",     data)::hs -> pack {ht with subject     = data} hs
-        | ("In-Reply-To: ", data)::hs -> pack {ht with in_reply_to = data} hs
-        | ("References: ",  data)::hs -> pack {ht with references  = data} hs
-        | ("Message-ID: ",  data)::hs -> pack {ht with message_id  = data} hs
-        |                       h::hs -> print_endline (dump h); assert false
+    let validate hs =
+      let rec validate hs' = function
+        |                                [] -> hs'
+        | (("TOP_FROM",     data) as h)::hs -> validate (h::hs') hs
+        | (("From:",        data) as h)::hs -> validate (h::hs') hs
+        | (("Date:",        data) as h)::hs -> validate (h::hs') hs
+        | (("Subject:",     data) as h)::hs -> validate (h::hs') hs
+        | (("In-Reply-To:", data) as h)::hs -> validate (h::hs') hs
+        | (("References:",  data) as h)::hs -> validate (h::hs') hs
+        | (("Message-ID:",  data) as h)::hs -> validate (h::hs') hs
+        |                             h::hs -> print_endline (dump h);
+                                               assert false
       in
-      let ht =
-        { top_from    = ""
-        ; from        = ""
-        ; date        = ""
-        ; subject     = ""
-        ; in_reply_to = ""
-        ; references  = ""
-        ; message_id  = ""
-        }
-      in
-      pack ht hs
+      validate [] hs
     in
     let parse_header h =
       if (Str.string_match RegExp.top_from h 0) then
-        "top_from", h
+        "TOP_FROM", h
       else
         match Str.full_split RegExp.header_tag h with
-        | [Str.Delim tag; Str.Text data] -> tag, data
+        | [Str.Delim tag; Str.Text data] -> Str.strip tag, data
         | _ -> print_endline h; assert false
     in
     let rec parse h hs bs = function
-      | Header, [] | Body, [] -> {headers=pack_headers hs; body=List.rev bs}
-      | Header, ""::ls -> parse "" ((parse_header h)::hs) bs (Body, ls)
-      | Header,  l::ls when is_head_tag l -> parse l ((parse_header h)::hs) bs (Header, ls)
-      | Header,  l::ls when is_head_dat l -> parse (h^l) hs bs (Header, ls)
-      | Header,  l::ls -> assert false
+      | Headers, [] | Body, [] -> {headers=validate hs; body=List.rev bs}
+      | Headers, ""::ls -> parse "" ((parse_header h)::hs) bs (Body, ls)
+      | Headers,  l::ls when is_head_tag l -> parse l ((parse_header h)::hs) bs (Headers, ls)
+      | Headers,  l::ls when is_head_dat l -> parse (h^l) hs bs (Headers, ls)
+      | Headers,  l::ls -> assert false
       | Body,    l::ls -> parse h hs (l::bs) (Body, ls)
     in
-    let h, lines = match lines with l::ls -> l, ls | _ -> assert false in
-    parse h [] [] (Header, lines)
+    let h, lines = match lines with
+      | h::lines -> h, lines
+      | _ -> print_endline (dump lines); assert false
+    in
+    parse h [] [] (Headers, lines)
 end
 
 
@@ -185,7 +181,7 @@ let main () =
       print_endline bar_minor;
       print_endline "| HEADERS";
       print_endline bar_minor;
-      print_endline (dump msg.Msg.headers);
+      List.iter (dump |- print_endline) msg.Msg.headers;
 
       print_endline bar_minor;
       print_endline "| BODY";
