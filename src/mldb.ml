@@ -3,10 +3,9 @@ open Printf
 
 
 module RegExp = struct
-  let space = Str.regexp " +"
-  let space_lead = Str.regexp "^ +"
-  let space_trail = Str.regexp " +$"
-  let white_space = Str.regexp "[ \t]+"
+  let spaces_lead = Str.regexp "^ +"
+  let spaces_trail = Str.regexp " +$"
+  let white_spaces = Str.regexp "[ \t]+"
   let newline = Str.regexp "\n"
 
   let top_from =
@@ -40,8 +39,8 @@ end
 
 module Str = struct include Str
   let strip s = s
-    |> replace_first RegExp.space_lead ""
-    |> replace_first RegExp.space_trail ""
+    |> replace_first RegExp.spaces_lead ""
+    |> replace_first RegExp.spaces_trail ""
 end
 
 
@@ -83,16 +82,16 @@ module Msg = struct
   let is_head_data l = Str.string_match RegExp.header_data l 0
 
 
-  let clean_id id =
+  let parse_msg_id id =
     try Scanf.sscanf id "<%s@>" (fun id -> id)
     with e -> print_endline id; print_endline (dump e); assert false
 
 
-  let clean_ids data = data
+  let parse_msg_ids data = data
     |> Str.replace_first RegExp.angle_bracket_open_lead ""
     |> Str.replace_first RegExp.angle_bracket_close_trail ""
     |> Str.split RegExp.between_angle_bracketed_items
-    |> List.map (Str.global_replace RegExp.white_space "")
+    |> List.map (Str.global_replace RegExp.white_spaces "")
 
 
   let parse (msg_txt : string) : t =
@@ -116,10 +115,10 @@ module Msg = struct
         | ("In-Reply-To:", data)::hs -> pack {msg with in_reply_to = data} hs
 
         | ("References:" , data)::hs ->
-          pack {msg with references  = clean_ids data} hs
+          pack {msg with references  = parse_msg_ids data} hs
 
         | ("Message-ID:" , data)::hs ->
-          pack {msg with message_id  = clean_id  data} hs
+          pack {msg with message_id  = parse_msg_id  data} hs
 
         | _ -> assert false
       in
