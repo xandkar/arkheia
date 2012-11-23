@@ -3,6 +3,8 @@ open Printf
 
 
 module RegExp = struct
+  let white_space = Str.regexp "[ \t]+"
+
   let space = Str.regexp " +"
   let space_leading = Str.regexp "^ +"
   let space_trailing = Str.regexp " +$"
@@ -29,6 +31,10 @@ module RegExp = struct
 
   let header_tag = Str.regexp "^[a-zA-Z-_]+: "
   let header_data = Str.regexp "^[ \t]+"
+
+  let angle_bracket_leading = Str.regexp "^<"
+  let angle_bracket_trailing = Str.regexp ">$"
+  let between_angle_bracketed_items = Str.regexp ">[ \t\n]+<"
 end
 
 
@@ -83,10 +89,10 @@ module Msg = struct
     in
     let clean_ids data =
       data
-      |> Str.replace_first (Str.regexp "^<") ""
-      |> Str.replace_first (Str.regexp ">$") ""
-      |> Str.split (Str.regexp ">[ \n]+<")
-      |> List.map (Str.global_replace (Str.regexp "[ \n\t]+") "")
+      |> Str.replace_first RegExp.angle_bracket_leading ""
+      |> Str.replace_first RegExp.angle_bracket_trailing ""
+      |> Str.split RegExp.between_angle_bracketed_items
+      |> List.map (Str.global_replace RegExp.white_space "")
     in
     let parse_header h =
       if (Str.string_match RegExp.top_from h 0) then
