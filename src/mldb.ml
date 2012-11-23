@@ -40,7 +40,7 @@ end
 
 module GZ = struct include Gzip
   let output_line (oc : out_channel) (line : string) : unit =
-    String.iteri (fun _ c -> output_char oc c) line;
+    String.iter (fun c -> output_char oc c) line;
     output_char oc '\n'
 
 
