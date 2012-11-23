@@ -45,9 +45,11 @@ end
 
 
 module GZ = struct include Gzip
+  let output_string (oc : out_channel) (s : string) : unit =
+    String.iter (fun c -> output_char oc c) s
+
   let output_line (oc : out_channel) (line : string) : unit =
-    String.iter (fun c -> output_char oc c) line;
-    output_char oc '\n'
+    output_string oc line; output_char oc '\n'
 
 
   let input_line (ic : in_channel) : string =
@@ -157,7 +159,6 @@ module Msg = struct
       | h::msg_lines -> h, msg_lines
       | _ -> print_endline msg_txt; assert false
     in
-
     parse h [] [] (Headers, msg_lines)
 
 
@@ -186,6 +187,19 @@ module Msg = struct
       ]
     );
     print_newline ()
+
+
+  let save dir msg_txt =
+    let msg = parse msg_txt in
+    let extension = ".eml.gz" in
+    let filename = msg.message_id ^ extension in
+    let path = Filename.concat dir filename in
+    let oc = GZ.open_out path in
+    begin
+      try GZ.output_string oc msg_txt
+      with e -> GZ.close_out oc; raise e
+    end;
+    GZ.close_out oc
 end
 
 
@@ -224,16 +238,16 @@ end
 
 module Options = struct
   type t =
-    { mbox_file  : string
-    ; data_dir   : string
-    ; list_name  : string
+    { mbox_file    : string
+    ; list_name    : string
+    ; dir_messages : string
     }
 
 
   let parse () =
     let usage = "" in
     let mbox_file = ref "" in
-    let data_dir = ref "data" in
+    let data_dir  = ref "data" in
     let list_name = ref "" in
 
     let speclist = Arg.align
@@ -251,18 +265,28 @@ module Options = struct
       failwith "Need name of the mailing list."
 
     else
-      { mbox_file = !mbox_file
-      ; data_dir  = !data_dir
-      ; list_name = !list_name
+      let data_dir =
+        String.concat "/" [!data_dir; "lists"; !list_name]
+      in
+      { mbox_file    = !mbox_file
+      ; list_name    = !list_name
+      ; dir_messages = String.concat "/" [data_dir; "messages"]
       }
 end
 
 
 let main () =
   let o = Options.parse () in
-  let mbox = Mbox.msg_stream o.Options.mbox_file in
+  let mbox_file = o.Options.mbox_file in
+  let dir_messages = o.Options.dir_messages in
 
-  Stream.iter  (Msg.parse |- Msg.print)  mbox
+  match Sys.command ("mkdir -p " ^ dir_messages) with
+  | 0 ->
+    Stream.iter
+    (Msg.save dir_messages)
+    (Mbox.msg_stream mbox_file)
+
+  | n -> failwith (sprintf "Could not create directory: %s" dir_messages)
 
 
 let () = main ()
