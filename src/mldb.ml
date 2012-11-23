@@ -1,4 +1,5 @@
 open Batteries
+open Printf
 
 
 module RegExp = struct
@@ -57,47 +58,35 @@ end
 
 
 module Msg = struct
-  type header =
-    string * string
-
   type t =
-    { headers : header list
-    ; body    : string list
+    { top_from    : string
+    ; from        : string
+    ; date        : string
+    ; subject     : string
+    ; in_reply_to : string
+    ; references  : string list
+    ; message_id  : string
+    ; body        : string list
     }
 
   type section =
     Headers | Body
 
+
   let is_head_tag l = Str.string_match RegExp.header_tag l 0
   let is_head_dat l = Str.string_match RegExp.header_data l 0
 
   let parse (lines : string list) : t =
-    let validate hs =
-      let clean_id id =
-        try Scanf.sscanf id "<%s@>" (fun id -> id)
-        with e -> print_endline id; print_endline (dump e); assert false
-      in
-      let clean_ids data =
-        data
-        |> Str.replace_first (Str.regexp "^<") ""
-        |> Str.replace_first (Str.regexp ">$") ""
-        |> Str.split (Str.regexp ">[ \n]+<")
-        |> List.map (Str.global_replace (Str.regexp "[ \n\t]+") "")
-        |> String.concat "|"
-      in
-      let rec validate hs' = function
-        |                                [] -> hs'
-        | (("TOP_FROM",     data) as h)::hs -> validate (h::hs') hs
-        | (("From:",        data) as h)::hs -> validate (h::hs') hs
-        | (("Date:",        data) as h)::hs -> validate (h::hs') hs
-        | (("Subject:",     data) as h)::hs -> validate (h::hs') hs
-        | (("In-Reply-To:", data) as h)::hs -> validate (h::hs') hs
-        | ("References:"  as t, d)::hs -> validate ((t, clean_ids d)::hs') hs
-        | ("Message-ID:"  as t, d)::hs -> validate ((t, clean_id  d)::hs') hs
-
-        | h::_ -> print_endline (dump h); assert false
-      in
-      validate [] hs
+    let clean_id id =
+      try Scanf.sscanf id "<%s@>" (fun id -> id)
+      with e -> print_endline id; print_endline (dump e); assert false
+    in
+    let clean_ids data =
+      data
+      |> Str.replace_first (Str.regexp "^<") ""
+      |> Str.replace_first (Str.regexp ">$") ""
+      |> Str.split (Str.regexp ">[ \n]+<")
+      |> List.map (Str.global_replace (Str.regexp "[ \n\t]+") "")
     in
     let parse_header h =
       if (Str.string_match RegExp.top_from h 0) then
@@ -107,13 +96,44 @@ module Msg = struct
         | [Str.Delim tag; Str.Text data] -> Str.strip tag, Str.strip data
         | _ -> print_endline h; assert false
     in
-    let rec parse h hs bs = function
-      | Headers, [] | Body, [] -> {headers=validate hs; body=List.rev bs}
-      | Headers, ""::ls -> parse "" ((parse_header h)::hs) bs (Body, ls)
-      | Headers,  l::ls when is_head_tag l -> parse l ((parse_header h)::hs) bs (Headers, ls)
-      | Headers,  l::ls when is_head_dat l -> parse (h^l) hs bs (Headers, ls)
+    let pack_msg hs bs =
+      let rec pack msg = function
+        | [] -> msg
+
+        | ("TOP_FROM"    , data)::hs -> pack {msg with top_from    = data} hs
+        | ("From:"       , data)::hs -> pack {msg with from        = data} hs
+        | ("Date:"       , data)::hs -> pack {msg with date        = data} hs
+        | ("Subject:"    , data)::hs -> pack {msg with subject     = data} hs
+        | ("In-Reply-To:", data)::hs -> pack {msg with in_reply_to = data} hs
+
+        | ("References:" , data)::hs ->
+          pack {msg with references  = clean_ids data} hs
+
+        | ("Message-ID:" , data)::hs ->
+          pack {msg with message_id  = clean_id  data} hs
+
+        | _ -> assert false
+      in
+      let msg =
+        { top_from    = ""
+        ; from        = ""
+        ; date        = ""
+        ; subject     = ""
+        ; in_reply_to = ""
+        ; references  = []
+        ; message_id  = ""
+        ; body        = bs
+        }
+      in
+      pack msg hs
+    in
+    let rec parse h hs' bs' = function
+      | Headers, [] | Body, [] -> pack_msg hs' (List.rev bs')
+      | Headers, ""::ls -> parse "" ((parse_header h)::hs') bs' (Body, ls)
+      | Headers,  l::ls when is_head_tag l -> parse l ((parse_header h)::hs') bs' (Headers, ls)
+      | Headers,  l::ls when is_head_dat l -> parse (h^l) hs' bs' (Headers, ls)
       | Headers,  l::ls -> assert false
-      | Body,    l::ls -> parse h hs (l::bs) (Body, ls)
+      | Body,    l::ls -> parse h hs' (l::bs') (Body, ls)
     in
     let h, lines = match lines with
       | h::lines -> h, lines
@@ -197,7 +217,16 @@ let main () =
       print_endline bar_minor;
       print_endline "| HEADERS";
       print_endline bar_minor;
-      List.iter (dump |- print_endline) msg.Msg.headers;
+
+      print_endline ("TOP_FROM:    " ^ msg.Msg.top_from   );
+      print_endline ("FROM:        " ^ msg.Msg.from       );
+      print_endline ("DATE:        " ^ msg.Msg.date       );
+      print_endline ("SUBJECT:     " ^ msg.Msg.subject    );
+      print_endline ("IN_REPLY_TO: " ^ msg.Msg.in_reply_to);
+      print_endline ("MESSAGE_ID:  " ^ msg.Msg.message_id );
+
+      print_endline "REFERENCES:";
+      List.iter (fun id -> printf "    %s\n" id) msg.Msg.references;
 
       print_endline bar_minor;
       print_endline "| BODY";
