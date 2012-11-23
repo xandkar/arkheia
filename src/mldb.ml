@@ -3,11 +3,11 @@ open Printf
 
 
 module RegExp = struct
-  let white_space = Str.regexp "[ \t]+"
-
   let space = Str.regexp " +"
   let space_lead = Str.regexp "^ +"
   let space_trail = Str.regexp " +$"
+  let white_space = Str.regexp "[ \t]+"
+  let newline = Str.regexp "\n"
 
   let top_from =
     let from = "^From" in
@@ -95,7 +95,7 @@ module Msg = struct
     |> List.map (Str.global_replace RegExp.white_space "")
 
 
-  let parse (lines : string list) : t =
+  let parse (msg_txt : string) : t =
     let parse_header h =
       if (Str.string_match RegExp.top_from h 0) then
         "TOP_FROM", h
@@ -154,12 +154,12 @@ module Msg = struct
       | Body, l::ls -> parse h hs' (l::bs') (Body, ls)
     in
 
-    let h, lines = match lines with
-      | h::lines -> h, lines
-      | _ -> print_endline (dump lines); assert false
+    let h, msg_lines = match (Str.split RegExp.newline msg_txt)with
+      | h::msg_lines -> h, msg_lines
+      | _ -> print_endline msg_txt; assert false
     in
 
-    parse h [] [] (Headers, lines)
+    parse h [] [] (Headers, msg_lines)
 
 
   let bar_major = let bar = String.make 80 '=' in bar.[0] <- '+'; bar
@@ -197,8 +197,8 @@ module Mbox = struct
 
   let read_msg s =
     let rec read msg' = match Stream.peek s with
-      | None -> Msg.parse (List.rev msg')
-      | Some line when is_msg_start line -> Msg.parse (List.rev msg')
+      | None -> String.concat "\n" (List.rev msg')
+      | Some line when is_msg_start line -> String.concat "\n" (List.rev msg')
       | Some line -> Stream.junk s; read (line::msg')
     in
     match Stream.peek s with
@@ -250,7 +250,7 @@ let main () =
   let o = Options.parse () in
   let mbox = Mbox.msg_stream o.Options.mbox_file in
 
-  Stream.iter Msg.print mbox
+  Stream.iter  (Msg.parse |- Msg.print)  mbox
 
 
 let () = main ()
