@@ -160,6 +160,33 @@ module Msg = struct
     in
 
     parse h [] [] (Headers, lines)
+
+
+  let bar_major = let bar = String.make 80 '=' in bar.[0] <- '+'; bar
+  let bar_minor = let bar = String.make 80 '-' in bar.[0] <- '+'; bar
+
+
+  let print msg =
+    let section bar s = String.concat "\n" [bar; s; bar] in
+    let indent_ref = "    " in
+
+    print_endline
+    ( String.concat "\n"
+      [ section bar_major "| MESSAGE"
+      ; section bar_minor "| HEADERS"
+      ; sprintf "TOP_FROM:    %s" msg.top_from
+      ; sprintf "FROM:        %s" msg.from
+      ; sprintf "DATE:        %s" msg.date
+      ; sprintf "SUBJECT:     %s" msg.subject
+      ; sprintf "IN_REPLY_TO: %s" msg.in_reply_to
+      ; sprintf "MESSAGE_ID:  %s" msg.message_id
+      ; "REFERENCES:"
+      ; String.concat "\n" (List.map (sprintf "%s%s" indent_ref) msg.references)
+      ; section bar_minor "| BODY"
+      ; String.concat "\n" msg.body
+      ]
+    );
+    print_newline ()
 end
 
 
@@ -223,39 +250,7 @@ let main () =
   let o = Options.parse () in
   let mbox = Mbox.msg_stream o.Options.mbox_file in
 
-  let bar_major = String.make 80 '=' in
-  let bar_minor = String.make 80 '-' in
-  bar_major.[0] <- '+';
-  bar_minor.[0] <- '+';
-
-  Stream.iter
-  ( fun msg ->
-      print_endline bar_major;
-      print_endline "| MSG";
-      print_endline bar_major;
-
-      print_endline bar_minor;
-      print_endline "| HEADERS";
-      print_endline bar_minor;
-
-      print_endline ("TOP_FROM:    " ^ msg.Msg.top_from   );
-      print_endline ("FROM:        " ^ msg.Msg.from       );
-      print_endline ("DATE:        " ^ msg.Msg.date       );
-      print_endline ("SUBJECT:     " ^ msg.Msg.subject    );
-      print_endline ("IN_REPLY_TO: " ^ msg.Msg.in_reply_to);
-      print_endline ("MESSAGE_ID:  " ^ msg.Msg.message_id );
-
-      print_endline "REFERENCES:";
-      List.iter (fun id -> printf "    %s\n" id) msg.Msg.references;
-
-      print_endline bar_minor;
-      print_endline "| BODY";
-      print_endline bar_minor;
-      List.iter print_endline msg.Msg.body;
-
-      print_newline ()
-  )
-  mbox
+  Stream.iter Msg.print mbox
 
 
 let () = main ()
