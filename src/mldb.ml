@@ -224,23 +224,36 @@ end
 
 module Options = struct
   type t =
-    { mbox_file : string
+    { mbox_file  : string
+    ; data_dir   : string
+    ; list_name  : string
     }
 
 
   let parse () =
     let usage = "" in
     let mbox_file = ref "" in
+    let data_dir = ref "data" in
+    let list_name = ref "" in
+
     let speclist = Arg.align
       [ ("-mbox-file", Arg.Set_string mbox_file, " Path to mbox file.")
+      ; ("-list-name", Arg.Set_string list_name, " Name of the mailing list.")
       ]
     in
+
     Arg.parse speclist (fun _ -> ()) usage;
 
     if !mbox_file = "" then
       failwith "Need path to an mbox file."
+
+    else if !list_name = "" then
+      failwith "Need name of the mailing list."
+
     else
       { mbox_file = !mbox_file
+      ; data_dir  = !data_dir
+      ; list_name = !list_name
       }
 end
 
