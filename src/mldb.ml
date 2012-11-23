@@ -6,8 +6,8 @@ module RegExp = struct
   let white_space = Str.regexp "[ \t]+"
 
   let space = Str.regexp " +"
-  let space_leading = Str.regexp "^ +"
-  let space_trailing = Str.regexp " +$"
+  let space_lead = Str.regexp "^ +"
+  let space_trail = Str.regexp " +$"
 
   let top_from =
     let from = "^From" in
@@ -32,16 +32,16 @@ module RegExp = struct
   let header_tag = Str.regexp "^[a-zA-Z-_]+: "
   let header_data = Str.regexp "^[ \t]+"
 
-  let angle_bracket_leading = Str.regexp "^<"
-  let angle_bracket_trailing = Str.regexp ">$"
+  let angle_bracket_open_lead = Str.regexp "^<"
+  let angle_bracket_close_trail = Str.regexp ">$"
   let between_angle_bracketed_items = Str.regexp ">[ \t\n]+<"
 end
 
 
 module Str = struct include Str
   let strip s = s
-    |> replace_first RegExp.space_leading ""
-    |> replace_first RegExp.space_trailing ""
+    |> replace_first RegExp.space_lead ""
+    |> replace_first RegExp.space_trail ""
 end
 
 
@@ -79,21 +79,23 @@ module Msg = struct
     Headers | Body
 
 
-  let is_head_tag l = Str.string_match RegExp.header_tag l 0
-  let is_head_dat l = Str.string_match RegExp.header_data l 0
+  let is_head_tag  l = Str.string_match RegExp.header_tag  l 0
+  let is_head_data l = Str.string_match RegExp.header_data l 0
+
+
+  let clean_id id =
+    try Scanf.sscanf id "<%s@>" (fun id -> id)
+    with e -> print_endline id; print_endline (dump e); assert false
+
+
+  let clean_ids data = data
+    |> Str.replace_first RegExp.angle_bracket_open_lead ""
+    |> Str.replace_first RegExp.angle_bracket_close_trail ""
+    |> Str.split RegExp.between_angle_bracketed_items
+    |> List.map (Str.global_replace RegExp.white_space "")
+
 
   let parse (lines : string list) : t =
-    let clean_id id =
-      try Scanf.sscanf id "<%s@>" (fun id -> id)
-      with e -> print_endline id; print_endline (dump e); assert false
-    in
-    let clean_ids data =
-      data
-      |> Str.replace_first RegExp.angle_bracket_leading ""
-      |> Str.replace_first RegExp.angle_bracket_trailing ""
-      |> Str.split RegExp.between_angle_bracketed_items
-      |> List.map (Str.global_replace RegExp.white_space "")
-    in
     let parse_header h =
       if (Str.string_match RegExp.top_from h 0) then
         "TOP_FROM", h
@@ -102,6 +104,7 @@ module Msg = struct
         | [Str.Delim tag; Str.Text data] -> Str.strip tag, Str.strip data
         | _ -> print_endline h; assert false
     in
+
     let pack_msg hs bs =
       let rec pack msg = function
         | [] -> msg
@@ -133,18 +136,29 @@ module Msg = struct
       in
       pack msg hs
     in
+
     let rec parse h hs' bs' = function
       | Headers, [] | Body, [] -> pack_msg hs' (List.rev bs')
-      | Headers, ""::ls -> parse "" ((parse_header h)::hs') bs' (Body, ls)
-      | Headers,  l::ls when is_head_tag l -> parse l ((parse_header h)::hs') bs' (Headers, ls)
-      | Headers,  l::ls when is_head_dat l -> parse (h^l) hs' bs' (Headers, ls)
-      | Headers,  l::ls -> assert false
-      | Body,    l::ls -> parse h hs' (l::bs') (Body, ls)
+
+      | Headers, ""::ls ->
+        parse "" ((parse_header h)::hs') bs' (Body, ls)
+
+      | Headers, l::ls when is_head_tag l ->
+        parse l ((parse_header h)::hs') bs' (Headers, ls)
+
+      | Headers, l::ls when is_head_data l ->
+        parse (h ^ l) hs' bs' (Headers, ls)
+
+      | Headers, l::ls -> assert false
+
+      | Body, l::ls -> parse h hs' (l::bs') (Body, ls)
     in
+
     let h, lines = match lines with
       | h::lines -> h, lines
       | _ -> print_endline (dump lines); assert false
     in
+
     parse h [] [] (Headers, lines)
 end
 
