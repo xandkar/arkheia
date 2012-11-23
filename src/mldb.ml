@@ -72,7 +72,7 @@ module Msg = struct
     ; subject     : string
     ; in_reply_to : string
     ; references  : string list
-    ; message_id  : string
+    ; id          : string
     ; body        : string list
     }
 
@@ -120,7 +120,7 @@ module Msg = struct
           pack {msg with references  = parse_msg_ids data} hs
 
         | ("Message-ID:" , data)::hs ->
-          pack {msg with message_id  = parse_msg_id  data} hs
+          pack {msg with id = parse_msg_id  data} hs
 
         | _ -> assert false
       in
@@ -131,7 +131,7 @@ module Msg = struct
         ; subject     = ""
         ; in_reply_to = ""
         ; references  = []
-        ; message_id  = ""
+        ; id          = ""
         ; body        = bs
         }
       in
@@ -179,7 +179,7 @@ module Msg = struct
       ; sprintf "DATE:        %s" msg.date
       ; sprintf "SUBJECT:     %s" msg.subject
       ; sprintf "IN_REPLY_TO: %s" msg.in_reply_to
-      ; sprintf "MESSAGE_ID:  %s" msg.message_id
+      ; sprintf "MESSAGE_ID:  %s" msg.id
       ; "REFERENCES:"
       ; String.concat "\n" (List.map (sprintf "%s%s" indent_ref) msg.references)
       ; section bar_minor "| BODY"
@@ -189,14 +189,13 @@ module Msg = struct
     print_newline ()
 
 
-  let save dir msg_txt =
-    let msg = parse msg_txt in
-    let extension = ".eml.gz" in
-    let filename = msg.message_id ^ extension in
-    let path = Filename.concat dir filename in
+  let save dir txt id =
+    let file_ext = ".eml.gz" in
+    let file_name = id ^ file_ext in
+    let path = Filename.concat dir file_name in
     let oc = GZ.open_out path in
     begin
-      try GZ.output_string oc msg_txt
+      try GZ.output_string oc txt
       with e -> GZ.close_out oc; raise e
     end;
     GZ.close_out oc
@@ -283,7 +282,10 @@ let main () =
   match Sys.command ("mkdir -p " ^ dir_messages) with
   | 0 ->
     Stream.iter
-    (Msg.save dir_messages)
+    ( fun msg_txt ->
+      let msg = Msg.parse msg_txt in
+      Msg.save dir_messages msg_txt msg.Msg.id
+    )
     (Mbox.msg_stream mbox_file)
 
   | n -> failwith (sprintf "Could not create directory: %s" dir_messages)
