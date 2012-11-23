@@ -235,60 +235,56 @@ module Mbox = struct
 end
 
 
-module Options = struct
-  type t =
-    { mbox_file    : string
-    ; list_name    : string
-    ; dir_messages : string
+type options =
+  { mbox_file    : string
+  ; list_name    : string
+  ; dir_messages : string
+  }
+
+
+let parse_options () =
+  let usage = "" in
+  let mbox_file = ref "" in
+  let data_dir  = ref "data" in
+  let list_name = ref "" in
+
+  let speclist = Arg.align
+    [ ("-mbox-file", Arg.Set_string mbox_file, " Path to mbox file.")
+    ; ("-list-name", Arg.Set_string list_name, " Name of the mailing list.")
+    ]
+  in
+
+  Arg.parse speclist (fun _ -> ()) usage;
+
+  if !mbox_file = "" then
+    failwith "Need path to an mbox file."
+
+  else if !list_name = "" then
+    failwith "Need name of the mailing list."
+
+  else
+    let data_dir =
+      String.concat "/" [!data_dir; "lists"; !list_name]
+    in
+    { mbox_file    = !mbox_file
+    ; list_name    = !list_name
+    ; dir_messages = String.concat "/" [data_dir; "messages"]
     }
 
 
-  let parse () =
-    let usage = "" in
-    let mbox_file = ref "" in
-    let data_dir  = ref "data" in
-    let list_name = ref "" in
-
-    let speclist = Arg.align
-      [ ("-mbox-file", Arg.Set_string mbox_file, " Path to mbox file.")
-      ; ("-list-name", Arg.Set_string list_name, " Name of the mailing list.")
-      ]
-    in
-
-    Arg.parse speclist (fun _ -> ()) usage;
-
-    if !mbox_file = "" then
-      failwith "Need path to an mbox file."
-
-    else if !list_name = "" then
-      failwith "Need name of the mailing list."
-
-    else
-      let data_dir =
-        String.concat "/" [!data_dir; "lists"; !list_name]
-      in
-      { mbox_file    = !mbox_file
-      ; list_name    = !list_name
-      ; dir_messages = String.concat "/" [data_dir; "messages"]
-      }
-end
-
-
 let main () =
-  let o = Options.parse () in
-  let mbox_file = o.Options.mbox_file in
-  let dir_messages = o.Options.dir_messages in
+  let opt = parse_options () in
 
-  match Sys.command ("mkdir -p " ^ dir_messages) with
+  match Sys.command ("mkdir -p " ^ opt.dir_messages) with
   | 0 ->
     Stream.iter
     ( fun msg_txt ->
       let msg = Msg.parse msg_txt in
-      Msg.save dir_messages msg_txt msg.Msg.id
+      Msg.save opt.dir_messages msg_txt msg.Msg.id
     )
-    (Mbox.msg_stream mbox_file)
+    (Mbox.msg_stream opt.mbox_file)
 
-  | n -> failwith (sprintf "Could not create directory: %s" dir_messages)
+  | n -> failwith (sprintf "Could not create directory: %s" opt.dir_messages)
 
 
 let () = main ()
