@@ -15,7 +15,7 @@ let replace_illegal_chars s : unit =
 let tokenize s : string list =
   replace_illegal_chars s; s
   |> Str.split RegExp.white_spaces_and_newlines
-  |> List.filter (fun s -> not (s = ""))
+  |> List.filter (fun s -> let len = String.length s in len > 0 && len < 255)
 
 
 let count_and_positions tokens =
