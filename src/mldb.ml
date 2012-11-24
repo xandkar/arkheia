@@ -276,13 +276,12 @@ module Index = struct
     ]
 
 
-  let replace_illegal_chars s =
-    String.iteri (fun i c -> if List.mem c illegal_chars then s.[i] <- ' ') s;
-    s
+  let replace_illegal_chars s : unit =
+    String.iteri (fun i c -> if List.mem c illegal_chars then s.[i] <- ' ') s
 
 
-  let tokenize str =
-    replace_illegal_chars str
+  let tokenize s : string list =
+    replace_illegal_chars s; s
     |> Str.split RegExp.white_spaces_and_newlines
     |> List.filter (fun s -> not (s = ""))
 end
