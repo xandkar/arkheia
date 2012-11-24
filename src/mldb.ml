@@ -353,12 +353,13 @@ let main () =
 
       let tokens = histogram (Index.tokenize msg.Msg.body) in
 
-      let modes = [Open_append; Open_creat; Open_text] in
-      let perms = 0o666 in
-
       List.iter
       ( fun (word, count) ->
-          let word_file = Filename.concat opt.dir_index (word ^ ".csv") in
+          let dir = Filename.concat opt.dir_index (string_of_char word.[0]) in
+          let 0 = mkdir dir in
+          let word_file = Filename.concat dir (word ^ ".csv.gz") in
+          let modes = [Open_append; Open_creat; Open_text] in
+          let perms = 0o666 in
           let oc = Pervasives.open_out_gen modes perms word_file in
           let oc_gz = GZ.open_out_chan oc in
           GZ.output_string oc_gz (sprintf "%d|%s\n" count msg.Msg.id);
