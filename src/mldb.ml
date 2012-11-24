@@ -360,9 +360,11 @@ let main () =
       List.iter
       ( fun (word, count) ->
           let word_file = Filename.concat opt.dir_index (word ^ ".csv") in
-          let oc = open_out_gen modes perms word_file in
-          output_string oc (sprintf "%d|%s\n" count msg.Msg.id);
-          close_out oc
+          let oc = Pervasives.open_out_gen modes perms word_file in
+          let oc_gz = GZ.open_out_chan oc in
+          GZ.output_string oc_gz (sprintf "%d|%s\n" count msg.Msg.id);
+          GZ.close_out oc_gz;
+          Pervasives.close_out oc
       )
       tokens;
 
