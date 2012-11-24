@@ -6,7 +6,10 @@ module RegExp = struct
   let spaces_lead = Str.regexp "^ +"
   let spaces_trail = Str.regexp " +$"
   let white_spaces = Str.regexp "[ \t]+"
+  let white_spaces_and_newlines = Str.regexp "[\n \t]+"
   let newline = Str.regexp "\n"
+
+  let not_indexable_chars = Str.regexp "[>/]+"
 
   let top_from =
     let from = "^From" in
@@ -73,7 +76,7 @@ module Msg = struct
     ; in_reply_to : string
     ; references  : string list
     ; id          : string
-    ; body        : string list
+    ; body        : string
     }
 
   type section =
@@ -132,7 +135,7 @@ module Msg = struct
         ; in_reply_to = ""
         ; references  = []
         ; id          = ""
-        ; body        = bs
+        ; body        = String.concat "\n" bs
         }
       in
       pack msg hs
@@ -183,7 +186,7 @@ module Msg = struct
       ; "REFERENCES:"
       ; String.concat "\n" (List.map (sprintf "%s%s" indent_ref) msg.references)
       ; section bar_minor "| BODY"
-      ; String.concat "\n" msg.body
+      ; msg.body
       ]
     );
     print_newline ()
@@ -235,10 +238,61 @@ module Mbox = struct
 end
 
 
+module Index = struct
+  let illegal_chars : char list =
+    [ '`'
+    ; '~'
+    ; '!'
+    ; '@'
+    ; '#'
+    ; '#'
+    ; '$'
+    ; '%'
+    ; '^'
+    ; '&'
+    ; '*'
+    ; '('
+    ; ')'
+    ; '='
+    ; '+'
+    ; '['
+    ; '{'
+    ; ']'
+    ; '}'
+    ; '\\'
+    ; '|'
+    ; ';'
+    ; ':'
+    ; '\''
+    ; '"'
+    ; '<'
+    ; '.'
+    ; ','
+    ; '>'
+    ; '/'
+    ; '?'
+    ; '-'
+    ; '_'
+    ]
+
+
+  let replace_illegal_chars s =
+    String.iteri (fun i c -> if List.mem c illegal_chars then s.[i] <- ' ') s;
+    s
+
+
+  let tokenize str =
+    replace_illegal_chars str
+    |> Str.split RegExp.white_spaces_and_newlines
+    |> List.filter (fun s -> not (s = ""))
+end
+
+
 type options =
   { mbox_file    : string
   ; list_name    : string
   ; dir_messages : string
+  ; dir_index    : string
   }
 
 
@@ -269,22 +323,42 @@ let parse_options () =
     { mbox_file    = !mbox_file
     ; list_name    = !list_name
     ; dir_messages = String.concat "/" [data_dir; "messages"]
+    ; dir_index    = String.concat "/" [data_dir; "index"]
     }
+
+
+let mkdir path : int =
+  Sys.command ("mkdir -p " ^ path)
 
 
 let main () =
   let opt = parse_options () in
 
-  match Sys.command ("mkdir -p " ^ opt.dir_messages) with
-  | 0 ->
+  match mkdir opt.dir_messages, mkdir opt.dir_index with
+  | 0, 0 ->
     Stream.iter
     ( fun msg_txt ->
       let msg = Msg.parse msg_txt in
-      Msg.save opt.dir_messages msg_txt msg.Msg.id
+      Msg.save opt.dir_messages msg_txt msg.Msg.id;
+
+      let tokens = Index.tokenize msg.Msg.body in
+
+      List.iter
+      ( fun word ->
+          let word_file = Filename.concat opt.dir_index (word ^ ".csv") in
+          let oc = open_out word_file in
+          output_string oc msg.Msg.id;
+          close_out oc
+      )
+      tokens;
+
+      print_endline (dump tokens);
+      print_newline ();
+      print_newline ()
     )
     (Mbox.msg_stream opt.mbox_file)
 
-  | n -> failwith (sprintf "Could not create directory: %s" opt.dir_messages)
+  | _, _ -> failwith "Could not create output directories."
 
 
 let () = main ()
