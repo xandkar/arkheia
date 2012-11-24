@@ -1,6 +1,10 @@
 open Batteries
 
 
+module RegExp = Mldb_regexp
+module Utils = Mldb_utils
+
+
 let illegal_chars : char list =
   [ '`'; '~'; '!'; '@'; '#'; '#'; '$'; '%'; '^'; '&'; '*'; '('; ')'; '='; '+';
     '['; '{'; ']'; '}'; '\\'; '|'; ';'; ':'; '\''; '"'; '<'; '.'; ','; '>';

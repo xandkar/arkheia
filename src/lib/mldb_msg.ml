@@ -2,6 +2,11 @@ open Batteries
 open Printf
 
 
+module GZ     = Mldb_gz
+module RegExp = Mldb_regexp
+module Utils  = Mldb_utils
+
+
 type t =
   { top_from    : string
   ; from        : string

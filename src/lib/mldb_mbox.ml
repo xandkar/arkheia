@@ -1,3 +1,7 @@
+module GZ     = Mldb_gz
+module RegExp = Mldb_regexp
+
+
 let is_msg_start l =
   Str.string_match RegExp.top_from l 0
 

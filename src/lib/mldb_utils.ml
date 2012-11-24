@@ -1,6 +1,9 @@
 open Batteries
 
 
+module RegExp = Mldb_regexp
+
+
 exception Mkdir_failure of int * string
 
 

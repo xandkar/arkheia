@@ -12,35 +12,37 @@ compile: compile_lib compile_app
 
 
 compile_lib:
-	@          $(COMPILER)                  -I src/lib -c src/lib/RegExp.mli
-	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/RegExp.ml
-	@          $(COMPILER)                  -I src/lib -c src/lib/Utils.mli
-	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/Utils.ml
-	@          $(COMPILER)                  -I src/lib -c src/lib/GZ.mli
-	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/GZ.ml
-	@          $(COMPILER)                  -I src/lib -c src/lib/Msg.mli
-	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/Msg.ml
-	@          $(COMPILER)                  -I src/lib -c src/lib/Mbox.mli
-	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/Mbox.ml
-	@          $(COMPILER)                  -I src/lib -c src/lib/Index.mli
-	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/Index.ml
+	@          $(COMPILER)                  -I src/lib -c src/lib/mldb_regexp.mli
+	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/mldb_regexp.ml
+	@          $(COMPILER)                  -I src/lib -c src/lib/mldb_utils.mli
+	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/mldb_utils.ml
+	@          $(COMPILER)                  -I src/lib -c src/lib/mldb_gz.mli
+	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/mldb_gz.ml
+	@          $(COMPILER)                  -I src/lib -c src/lib/mldb_msg.mli
+	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/mldb_msg.ml
+	@          $(COMPILER)                  -I src/lib -c src/lib/mldb_mbox.mli
+	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/mldb_mbox.ml
+	@          $(COMPILER)                  -I src/lib -c src/lib/mldb_index.mli
+	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/lib/mldb_index.ml
+	@          $(COMPILER)                  -I src/lib -c src/lib/mldb.ml
 
 
 compile_app:
-	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/app/$(EXECUTABLE).ml
+	@ocamlfind $(COMPILER) -package $(LIBS) -I src/lib -c src/app/$(EXECUTABLE)_main.ml
 
 
 link:
 	@mkdir -p bin
 	@ocamlfind $(COMPILER) -thread -linkpkg -package $(LIBS) \
 		-o bin/$(EXECUTABLE) \
-		src/lib/RegExp.$(OBJ_EXT) \
-		src/lib/Utils.$(OBJ_EXT) \
-		src/lib/GZ.$(OBJ_EXT) \
-		src/lib/Msg.$(OBJ_EXT) \
-		src/lib/Mbox.$(OBJ_EXT) \
-		src/lib/Index.$(OBJ_EXT) \
-		src/app/$(EXECUTABLE).$(OBJ_EXT)
+		src/lib/mldb_regexp.$(OBJ_EXT) \
+		src/lib/mldb_utils.$(OBJ_EXT) \
+		src/lib/mldb_gz.$(OBJ_EXT) \
+		src/lib/mldb_msg.$(OBJ_EXT) \
+		src/lib/mldb_mbox.$(OBJ_EXT) \
+		src/lib/mldb_index.$(OBJ_EXT) \
+		src/lib/mldb.$(OBJ_EXT) \
+		src/app/$(EXECUTABLE)_main.$(OBJ_EXT)
 
 
 clean:
