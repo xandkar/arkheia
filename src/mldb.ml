@@ -2,9 +2,6 @@ open Batteries
 open Printf
 
 
-exception Mkdir_failure of int * string
-
-
 module RegExp = struct
   let spaces_lead = Str.regexp "^ +"
   let spaces_trail = Str.regexp " +$"
@@ -260,6 +257,28 @@ module Index = struct
 end
 
 
+module Utils = struct
+  exception Mkdir_failure of int * string
+
+
+  let mkpath path : unit =
+    match Sys.command ("mkdir -p " ^ path) with
+    | 0 -> ()
+    | n -> raise (Mkdir_failure (n, path))
+
+
+  let histogram lst =
+    let h = Hashtbl.create 1 in
+    List.iter
+    ( fun e ->
+        try let i = Hashtbl.find h e in Hashtbl.replace h e (i + 1)
+        with Not_found -> Hashtbl.add h e 1
+    )
+    lst;
+    Hashtbl.fold (fun k v acc -> (k, v)::acc) h []
+end
+
+
 type options =
   { mbox_file    : string
   ; list_name    : string
@@ -299,40 +318,23 @@ let parse_options () =
     }
 
 
-let mkpath path : unit =
-  match Sys.command ("mkdir -p " ^ path) with
-  | 0 -> ()
-  | n -> raise (Mkdir_failure (n, path))
-
-
-let histogram lst =
-  let h = Hashtbl.create 1 in
-  List.iter
-  ( fun e ->
-      try let i = Hashtbl.find h e in Hashtbl.replace h e (i + 1)
-      with Not_found -> Hashtbl.add h e 1
-  )
-  lst;
-  Hashtbl.fold (fun k v acc -> (k, v)::acc) h []
-
-
 let main () =
   let opt = parse_options () in
 
-  mkpath opt.dir_messages;
-  mkpath opt.dir_index;
+  Utils.mkpath opt.dir_messages;
+  Utils.mkpath opt.dir_index;
 
   Stream.iter
   ( fun msg_txt ->
     let msg = Msg.parse msg_txt in
     Msg.save opt.dir_messages msg_txt msg.Msg.id;
 
-    let tokens = histogram (Index.tokenize msg.Msg.body) in
+    let tokens = Utils.histogram (Index.tokenize msg.Msg.body) in
 
     List.iter
     ( fun (word, count) ->
         let dir = Filename.concat opt.dir_index (string_of_char word.[0]) in
-        mkpath dir;
+        Utils.mkpath dir;
         let word_file = Filename.concat dir (word ^ ".csv.gz") in
         let modes = [Open_append; Open_creat; Open_text] in
         let perms = 0o666 in
