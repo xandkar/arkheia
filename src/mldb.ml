@@ -299,7 +299,7 @@ let parse_options () =
     }
 
 
-let mkdir path : unit =
+let mkpath path : unit =
   match Sys.command ("mkdir -p " ^ path) with
   | 0 -> ()
   | n -> raise (Mkdir_failure (n, path))
@@ -319,8 +319,8 @@ let histogram lst =
 let main () =
   let opt = parse_options () in
 
-  mkdir opt.dir_messages;
-  mkdir opt.dir_index;
+  mkpath opt.dir_messages;
+  mkpath opt.dir_index;
 
   Stream.iter
   ( fun msg_txt ->
@@ -332,7 +332,7 @@ let main () =
     List.iter
     ( fun (word, count) ->
         let dir = Filename.concat opt.dir_index (string_of_char word.[0]) in
-        mkdir dir;
+        mkpath dir;
         let word_file = Filename.concat dir (word ^ ".csv.gz") in
         let modes = [Open_append; Open_creat; Open_text] in
         let perms = 0o666 in
