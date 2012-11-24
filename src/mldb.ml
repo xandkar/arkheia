@@ -2,6 +2,9 @@ open Batteries
 open Printf
 
 
+exception Mkdir_failure of int * string
+
+
 module RegExp = struct
   let spaces_lead = Str.regexp "^ +"
   let spaces_trail = Str.regexp " +$"
@@ -326,8 +329,10 @@ let parse_options () =
     }
 
 
-let mkdir path : int =
-  Sys.command ("mkdir -p " ^ path)
+let mkdir path : unit =
+  match Sys.command ("mkdir -p " ^ path) with
+  | 0 -> ()
+  | n -> raise (Mkdir_failure (n, path))
 
 
 let histogram lst =
@@ -344,37 +349,36 @@ let histogram lst =
 let main () =
   let opt = parse_options () in
 
-  match mkdir opt.dir_messages, mkdir opt.dir_index with
-  | 0, 0 ->
-    Stream.iter
-    ( fun msg_txt ->
-      let msg = Msg.parse msg_txt in
-      Msg.save opt.dir_messages msg_txt msg.Msg.id;
+  mkdir opt.dir_messages;
+  mkdir opt.dir_index;
 
-      let tokens = histogram (Index.tokenize msg.Msg.body) in
+  Stream.iter
+  ( fun msg_txt ->
+    let msg = Msg.parse msg_txt in
+    Msg.save opt.dir_messages msg_txt msg.Msg.id;
 
-      List.iter
-      ( fun (word, count) ->
-          let dir = Filename.concat opt.dir_index (string_of_char word.[0]) in
-          let 0 = mkdir dir in
-          let word_file = Filename.concat dir (word ^ ".csv.gz") in
-          let modes = [Open_append; Open_creat; Open_text] in
-          let perms = 0o666 in
-          let oc = Pervasives.open_out_gen modes perms word_file in
-          let oc_gz = GZ.open_out_chan oc in
-          GZ.output_string oc_gz (sprintf "%d|%s\n" count msg.Msg.id);
-          GZ.close_out oc_gz;
-          Pervasives.close_out oc
-      )
-      tokens;
+    let tokens = histogram (Index.tokenize msg.Msg.body) in
 
-      print_endline (dump tokens);
-      print_newline ();
-      print_newline ()
+    List.iter
+    ( fun (word, count) ->
+        let dir = Filename.concat opt.dir_index (string_of_char word.[0]) in
+        mkdir dir;
+        let word_file = Filename.concat dir (word ^ ".csv.gz") in
+        let modes = [Open_append; Open_creat; Open_text] in
+        let perms = 0o666 in
+        let oc = Pervasives.open_out_gen modes perms word_file in
+        let oc_gz = GZ.open_out_chan oc in
+        GZ.output_string oc_gz (sprintf "%d|%s\n" count msg.Msg.id);
+        GZ.close_out oc_gz;
+        Pervasives.close_out oc
     )
-    (Mbox.msg_stream opt.mbox_file)
+    tokens;
 
-  | _, _ -> failwith "Could not create output directories."
+    print_endline (dump tokens);
+    print_newline ();
+    print_newline ()
+  )
+  (Mbox.msg_stream opt.mbox_file)
 
 
 let () = main ()
