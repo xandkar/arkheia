@@ -354,10 +354,13 @@ let main () =
 
       let tokens = histogram (Index.tokenize msg.Msg.body) in
 
+      let modes = [Open_append; Open_creat; Open_text] in
+      let perms = 0o666 in
+
       List.iter
       ( fun (word, count) ->
           let word_file = Filename.concat opt.dir_index (word ^ ".csv") in
-          let oc = open_out word_file in
+          let oc = open_out_gen modes perms word_file in
           output_string oc (sprintf "%d|%s\n" count msg.Msg.id);
           close_out oc
       )
