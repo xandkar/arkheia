@@ -331,6 +331,17 @@ let mkdir path : int =
   Sys.command ("mkdir -p " ^ path)
 
 
+let histogram lst =
+  let h = Hashtbl.create 1 in
+  List.iter
+  ( fun e ->
+      try let i = Hashtbl.find h e in Hashtbl.replace h e (i + 1)
+      with Not_found -> Hashtbl.add h e 1
+  )
+  lst;
+  Hashtbl.fold (fun k v acc -> (k, v)::acc) h []
+
+
 let main () =
   let opt = parse_options () in
 
@@ -341,13 +352,13 @@ let main () =
       let msg = Msg.parse msg_txt in
       Msg.save opt.dir_messages msg_txt msg.Msg.id;
 
-      let tokens = Index.tokenize msg.Msg.body in
+      let tokens = histogram (Index.tokenize msg.Msg.body) in
 
       List.iter
-      ( fun word ->
+      ( fun (word, count) ->
           let word_file = Filename.concat opt.dir_index (word ^ ".csv") in
           let oc = open_out word_file in
-          output_string oc msg.Msg.id;
+          output_string oc (sprintf "%d|%s\n" count msg.Msg.id);
           close_out oc
       )
       tokens;
