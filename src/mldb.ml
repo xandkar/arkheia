@@ -2,6 +2,28 @@ open Batteries
 open Printf
 
 
+module Utils = struct
+  exception Mkdir_failure of int * string
+
+
+  let mkpath path : unit =
+    match Sys.command ("mkdir -p " ^ path) with
+    | 0 -> ()
+    | n -> raise (Mkdir_failure (n, path))
+
+
+  let histogram lst =
+    let hist = Hashtbl.create 1 in
+    List.iter
+    ( fun e ->
+        try let i = Hashtbl.find hist e in Hashtbl.replace hist e (i + 1)
+        with Not_found -> Hashtbl.add hist e 1
+    )
+    lst;
+    hist
+end
+
+
 module RegExp = struct
   let spaces_lead = Str.regexp "^ +"
   let spaces_trail = Str.regexp " +$"
@@ -254,28 +276,29 @@ module Index = struct
     replace_illegal_chars s; s
     |> Str.split RegExp.white_spaces_and_newlines
     |> List.filter (fun s -> not (s = ""))
-end
 
 
-module Utils = struct
-  exception Mkdir_failure of int * string
+  let count_and_positions tokens =
+    let hist = Utils.histogram tokens in
+    let data = Hashtbl.create 1 in
 
+    List.iteri
+    ( fun position token ->
+        try
+          let (count, ps) = Hashtbl.find data token in
+          Hashtbl.replace data token (count, position::ps)
 
-  let mkpath path : unit =
-    match Sys.command ("mkdir -p " ^ path) with
-    | 0 -> ()
-    | n -> raise (Mkdir_failure (n, path))
-
-
-  let histogram lst =
-    let h = Hashtbl.create 1 in
-    List.iter
-    ( fun e ->
-        try let i = Hashtbl.find h e in Hashtbl.replace h e (i + 1)
-        with Not_found -> Hashtbl.add h e 1
+        with Not_found ->
+          let count = Hashtbl.find hist token in
+          Hashtbl.add data token (count, [position])
     )
-    lst;
-    Hashtbl.fold (fun k v acc -> (k, v)::acc) h []
+    tokens;
+
+    Hashtbl.fold
+    ( fun token (count, positions) data' ->
+        (token, (count, List.sort compare positions))::data'
+    )
+    data []
 end
 
 
@@ -329,18 +352,24 @@ let main () =
     let msg = Msg.parse msg_txt in
     Msg.save opt.dir_messages msg_txt msg.Msg.id;
 
-    let tokens = Utils.histogram (Index.tokenize msg.Msg.body) in
+    let tokens = Index.count_and_positions (Index.tokenize msg.Msg.body) in
 
     List.iter
-    ( fun (word, count) ->
+    ( fun (word, (count, positions)) ->
+        let positions = String.concat "," (List.map string_of_int positions) in
+        let data = (sprintf "%s|%d|%s\n" msg.Msg.id count positions) in
+
         let dir = Filename.concat opt.dir_index (string_of_char word.[0]) in
         Utils.mkpath dir;
         let word_file = Filename.concat dir (word ^ ".csv.gz") in
         let modes = [Open_append; Open_creat; Open_text] in
         let perms = 0o666 in
+
         let oc = Pervasives.open_out_gen modes perms word_file in
         let oc_gz = GZ.open_out_chan oc in
-        GZ.output_string oc_gz (sprintf "%d|%s\n" count msg.Msg.id);
+
+        GZ.output_string oc_gz data;
+
         GZ.close_out oc_gz;
         Pervasives.close_out oc
     )
