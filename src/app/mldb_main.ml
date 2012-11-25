@@ -11,6 +11,7 @@ type options =
   ; dir_messages : string
   ; dir_index    : string
   ; operation    : string
+  ; query        : string
   }
 
 
@@ -22,11 +23,13 @@ let parse_options () =
   let data_dir  = ref "data" in
   let list_name = ref "" in
   let operation = ref "" in
+  let query     = ref "" in
 
   let speclist = Arg.align
     [ ("-mbox-file", Arg.Set_string mbox_file, " Path to mbox file.")
     ; ("-list-name", Arg.Set_string list_name, " Name of the mailing list.")
     ; ("-operation", Arg.Set_string operation, " Operation to perform.")
+    ; ("-query",     Arg.Set_string query,     " Search query (if operation is 'search').")
     ]
   in
 
@@ -34,6 +37,9 @@ let parse_options () =
 
   if !operation = "" then
     failwith "Please specify an operation to perform."
+
+  else if !operation = "search" && !query = "" then
+    failwith "Please specify -query 'search terms' ."
 
   else if !mbox_file = "" then
     failwith "Need path to an mbox file."
@@ -50,6 +56,7 @@ let parse_options () =
     ; dir_messages = String.concat "/" [data_dir; "messages"]
     ; dir_index    = String.concat "/" [data_dir; "index"]
     ; operation    = !operation
+    ; query        = !query
     }
 
 
@@ -60,6 +67,12 @@ let main () =
   | "build_index" ->
     let msg_stream = M.Mbox.msg_stream opt.mbox_file in
     M.Index.build opt.dir_index opt.dir_messages msg_stream
+
+  | "search" ->
+    let index = M.Index.load opt.dir_index in
+    let query = List.hd (Str.split M.RegExp.white_spaces opt.query) in
+    let results = M.Index.lookup index query in
+    print_endline (dump results)
 
   | other -> failwith ("Invalid operation: " ^ other)
 

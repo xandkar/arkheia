@@ -7,6 +7,10 @@ module RegExp = Mldb_regexp
 module Utils  = Mldb_utils
 
 
+type t =
+  (string, (string * int * int list) list) Map.t
+
+
 let illegal_chars : char list =
   [ '`'; '~'; '!'; '@'; '#'; '#'; '$'; '%'; '^'; '&'; '*'; '('; ')'; '='; '+';
     '['; '{'; ']'; '}'; '\\'; '|'; ';'; ':'; '\''; '"'; '<'; '.'; ','; '>';
@@ -79,3 +83,41 @@ let build dir_index dir_messages msg_stream : unit =
   Utils.mkpath dir_index;
 
   Stream.iter process_message msg_stream
+
+
+let load (dir : string) : t =
+  let paths =
+    List.flatten
+    ( Array.fold_left
+      ( fun acc d ->
+          ( Array.fold_left
+            ( fun acc file -> (Filename.concat (Filename.concat dir d) file)::acc
+            ) [] (Sys.readdir (Filename.concat dir d))
+          )::acc
+      ) [] (Sys.readdir dir)
+    )
+  in
+
+  let rec read index = function
+    | [] -> index
+    | p::ps ->
+      let word = Filename.chop_suffix (Filename.basename p) ".csv.gz" in
+      let read_line l =
+        try
+          Scanf.sscanf l "%s@|%d|%s@\n"
+          ( fun a b c ->
+              let msg_id = a in
+              let frequency = b in
+              let positions = (List.map int_of_string (Str.split RegExp.comma c)) in
+              msg_id, frequency, positions
+          )
+        with Scanf.Scan_failure e -> print_endline (dump e); assert false
+      in
+      let data = List.map read_line (GZ.read_lines p) in
+      read (Map.add word data index) ps
+  in
+  read Map.empty paths
+
+
+let lookup (index : t) (query : string) : string list =
+  Map.find query index |> List.map (fun (msg_id, _, _) -> msg_id)

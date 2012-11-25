@@ -18,3 +18,5 @@ val output_string : out_channel -> string -> unit
 val output_line : out_channel -> string -> unit
 
 val input_line : in_channel -> string
+
+val read_lines : string -> string list

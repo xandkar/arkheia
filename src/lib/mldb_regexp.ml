@@ -32,3 +32,5 @@ let header_data = Str.regexp "^[ \t]+"
 let angle_bracket_open_lead = Str.regexp "^<"
 let angle_bracket_close_trail = Str.regexp ">$"
 let between_angle_bracketed_items = Str.regexp ">[ \t\n]+<"
+
+let comma = Str.regexp ","
