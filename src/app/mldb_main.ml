@@ -75,12 +75,17 @@ let main () =
     let results = Mldb.Index.lookup index query in
     let time_to_query = (Sys.time ()) -. start_time in
 
-    List.iter print_endline results;
+    let start_time = Sys.time () in
+    let results = List.sort (fun (_, a) (_, b) -> compare b a) results in
+    let time_to_rank = (Sys.time ()) -. start_time in
+
+    List.iter (fun (m, f) -> printf "%d\t%s\n%!" f m) results;
 
     print_newline ();
     print_newline ();
-    Printf.printf "LOAD   TIME: %f\n" time_to_load;
-    Printf.printf "LOOKUP TIME: %f\n" time_to_query
+    printf "LOAD   TIME: %f\n" time_to_load;
+    printf "LOOKUP TIME: %f\n" time_to_query;
+    printf "RANK   TIME: %f\n" time_to_rank
 
   | other -> failwith ("Invalid operation: " ^ other)
 

@@ -116,5 +116,5 @@ let load (dir : string) : t =
   read Map.empty paths
 
 
-let lookup (index : t) (query : string) : string list =
-  Map.find query index |> List.map (fun (msg_id, _, _) -> msg_id)
+let lookup (index : t) (query : string) : (string * int) list =
+  Map.find query index |> List.map (fun (msg_id, frequency, _positions) -> msg_id, frequency)
