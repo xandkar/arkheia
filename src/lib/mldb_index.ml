@@ -59,17 +59,13 @@ let build dir_index dir_messages msg_stream : unit =
     let dir = Filename.concat dir_index (string_of_char word.[0]) in
     Utils.mkpath dir;
 
-    let word_file = Filename.concat dir (word ^ ".csv.gz") in
+    let word_file = Filename.concat dir (word ^ ".csv") in
     let modes = [Open_append; Open_creat; Open_binary] in
     let perms = 0o666 in
 
-    let oc = Pervasives.open_out_gen modes perms word_file in
-    let oc_gz = GZ.open_out_chan oc in
-
-    GZ.output_string oc_gz data;
-
-    GZ.close_out oc_gz;
-    Pervasives.close_out oc
+    let oc = open_out_gen modes perms word_file in
+    output_string oc data;
+    close_out oc
   in
 
   let process_message msg_txt =
@@ -101,7 +97,7 @@ let load (dir : string) : t =
   let rec read index = function
     | [] -> index
     | p::ps ->
-      let word = Filename.chop_suffix (Filename.basename p) ".csv.gz" in
+      let word = Filename.chop_suffix (Filename.basename p) ".csv" in
       let read_line l =
         try
           Scanf.sscanf l "%s@|%d|%s@\n"
@@ -113,7 +109,7 @@ let load (dir : string) : t =
           )
         with Scanf.Scan_failure e -> print_endline (dump e); assert false
       in
-      let data = List.map read_line (GZ.read_lines p) in
+      let data = List.map read_line (Utils.lines_of p) in
       read (Map.add word data index) ps
   in
   read Map.empty paths

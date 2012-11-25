@@ -27,3 +27,14 @@ let histogram lst =
 let strip s = s
   |> Str.replace_first RegExp.spaces_lead ""
   |> Str.replace_first RegExp.spaces_trail ""
+
+
+let lines_of (path : string) : string list =
+  let ic = open_in path in
+  let rec read ls' =
+    try read ((input_line ic)::ls')
+    with End_of_file -> List.rev ls'
+  in
+  let lines = try read [] with e -> close_in ic; raise e in
+  close_in ic;
+  lines
