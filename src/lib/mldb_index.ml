@@ -60,7 +60,7 @@ let build dir_index dir_messages msg_stream : unit =
     Utils.mkpath dir;
 
     let word_file = Filename.concat dir (word ^ ".csv.gz") in
-    let modes = [Open_append; Open_creat; Open_text] in
+    let modes = [Open_append; Open_creat; Open_binary] in
     let perms = 0o666 in
 
     let oc = Pervasives.open_out_gen modes perms word_file in
