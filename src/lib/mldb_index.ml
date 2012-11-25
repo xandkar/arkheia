@@ -26,6 +26,7 @@ let tokenize s : string list =
   replace_illegal_chars s; s
   |> Str.split RegExp.white_spaces_and_newlines
   |> List.filter (fun s -> let len = String.length s in len > 0 && len < 255)
+  |> List.map String.lowercase
 
 
 let count_and_positions tokens =

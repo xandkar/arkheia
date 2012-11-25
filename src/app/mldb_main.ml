@@ -56,7 +56,7 @@ let parse_options () =
     ; dir_messages = String.concat "/" [data_dir; "messages"]
     ; dir_index    = String.concat "/" [data_dir; "index"]
     ; operation    = !operation
-    ; query        = !query
+    ; query        = String.lowercase !query
     }
 
 
