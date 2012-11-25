@@ -66,10 +66,21 @@ let main () =
     Mldb.Index.build opt.dir_index opt.dir_messages msg_stream
 
   | "search" ->
+    let start_time = Sys.time () in
     let index = Mldb.Index.load opt.dir_index in
+    let time_to_load = (Sys.time ()) -. start_time in
+
+    let start_time = Sys.time () in
     let query = List.hd (Str.split Mldb.RegExp.white_spaces opt.query) in
     let results = Mldb.Index.lookup index query in
-    List.iter print_endline results
+    let time_to_query = (Sys.time ()) -. start_time in
+
+    List.iter print_endline results;
+
+    print_newline ();
+    print_newline ();
+    Printf.printf "LOAD   TIME: %f\n" time_to_load;
+    Printf.printf "LOOKUP TIME: %f\n" time_to_query
 
   | other -> failwith ("Invalid operation: " ^ other)
 
