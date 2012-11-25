@@ -2,9 +2,6 @@ open Batteries
 open Printf
 
 
-module M = Mldb
-
-
 type options =
   { mbox_file    : string
   ; list_name    : string
@@ -65,13 +62,13 @@ let main () =
 
   match opt.operation with
   | "build_index" ->
-    let msg_stream = M.Mbox.msg_stream opt.mbox_file in
-    M.Index.build opt.dir_index opt.dir_messages msg_stream
+    let msg_stream = Mldb.Mbox.msg_stream opt.mbox_file in
+    Mldb.Index.build opt.dir_index opt.dir_messages msg_stream
 
   | "search" ->
-    let index = M.Index.load opt.dir_index in
-    let query = List.hd (Str.split M.RegExp.white_spaces opt.query) in
-    let results = M.Index.lookup index query in
+    let index = Mldb.Index.load opt.dir_index in
+    let query = List.hd (Str.split Mldb.RegExp.white_spaces opt.query) in
+    let results = Mldb.Index.lookup index query in
     print_endline (dump results)
 
   | other -> failwith ("Invalid operation: " ^ other)
