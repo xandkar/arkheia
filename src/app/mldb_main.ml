@@ -69,7 +69,7 @@ let main () =
     let index = Mldb.Index.load opt.dir_index in
     let query = List.hd (Str.split Mldb.RegExp.white_spaces opt.query) in
     let results = Mldb.Index.lookup index query in
-    print_endline (dump results)
+    List.iter print_endline results
 
   | other -> failwith ("Invalid operation: " ^ other)
 
