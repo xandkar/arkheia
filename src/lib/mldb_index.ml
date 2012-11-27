@@ -47,7 +47,7 @@ let count_and_positions tokens =
 
   Hashtbl.fold
   ( fun token (count, positions) data' ->
-      (token, (count, List.sort compare positions))::data'
+      (token, (count, List.sort positions))::data'
   )
   data []
 

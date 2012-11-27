@@ -69,7 +69,7 @@ let main () =
     let time_to_query = (Sys.time ()) -. start_time in
 
     let start_time = Sys.time () in
-    let results = List.sort (fun (_, a) (_, b) -> compare b a) results in
+    let results = List.sort ~cmp:(fun (_, a) (_, b) -> compare b a) results in
     let time_to_rank = (Sys.time ()) -. start_time in
 
     List.iter (fun (m, f) -> printf "%d\t%s\n%!" f m) results;
