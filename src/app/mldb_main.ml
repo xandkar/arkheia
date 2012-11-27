@@ -64,21 +64,17 @@ let main () =
     let time_to_load = (Sys.time ()) -. start_time in
 
     let start_time = Sys.time () in
-    let query = List.hd (Str.split Mldb.RegExp.white_spaces opt.query) in
-    let results = Mldb.Index.lookup index query in
+    let results = Mldb.Index.lookup index opt.query in
     let time_to_query = (Sys.time ()) -. start_time in
 
-    let start_time = Sys.time () in
-    let results = List.sort ~cmp:(fun (_, a) (_, b) -> compare b a) results in
-    let time_to_rank = (Sys.time ()) -. start_time in
+    let results_formatted = match results with
+      | [] -> "No match found."
+      | rs -> String.concat "\n" rs
+    in
 
-    List.iter (fun (m, f) -> printf "%d\t%s\n%!" f m) results;
-
-    print_newline ();
-    print_newline ();
+    printf "%s\n\n" results_formatted;
     printf "LOAD   TIME: %f\n" time_to_load;
-    printf "LOOKUP TIME: %f\n" time_to_query;
-    printf "RANK   TIME: %f\n" time_to_rank
+    printf "LOOKUP TIME: %f\n" time_to_query
 
   | other -> failwith ("Invalid operation: " ^ other)
 

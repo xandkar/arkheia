@@ -116,5 +116,17 @@ let load (dir : string) : t =
   read Map.empty paths
 
 
-let lookup (index : t) (query : string) : (string * int) list =
-  Map.find query index |> List.map (fun (msg_id, frequency, _positions) -> msg_id, frequency)
+let lookup (index : t) (query : string) : string list =
+  try
+    let words = Str.split RegExp.white_spaces query in
+    let msg_lists = List.map (fun w -> Map.find w index) words in
+    let msg_sets = List.map (List.map (Tuple.Tuple3.first) |- Set.of_list) msg_lists in
+
+    match msg_sets with
+    | s::ss ->
+      List.fold_left Set.intersect s ss |> Set.enum |> List.of_enum
+    | _ ->
+      assert false
+
+  with Not_found ->
+    []
