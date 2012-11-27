@@ -2,7 +2,7 @@ EXECUTABLE="mldb"
 
 COMPILER="ocamlopt"
 OBJ_EXT="cmx"
-LIBS="batteries,zip"
+LIBS="batteries,camlzip"
 
 
 all: clean compile link
