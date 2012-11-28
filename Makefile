@@ -51,4 +51,4 @@ clean:
 		    -iname '*.o' \
 		-or -iname '*.cmi' \
 		-or -iname "*.$(OBJ_EXT)" \
-		| xargs rm
+		| xargs rm -f
