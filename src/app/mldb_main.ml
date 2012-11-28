@@ -24,6 +24,7 @@ let parse_options () =
 
   let speclist = Arg.align
     [ ("-mbox-file", Arg.Set_string mbox_file, " Path to mbox file.")
+    ; ("-data-dir",  Arg.Set_string data_dir,  " Path to root data directory.")
     ; ("-list-name", Arg.Set_string list_name, " Name of the mailing list.")
     ; ("-operation", Arg.Set_string operation, " Operation to perform.")
     ; ("-query",     Arg.Set_string query,     " Search query (if operation is 'search').")
