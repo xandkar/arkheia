@@ -36,7 +36,7 @@ let parse_options () =
   match !operation, !query, !mbox_file, !list_name with
   |       "",  _,  _,  _ -> failwith "Please specify an operation to perform."
   | "search", "",  _,  _ -> failwith "Please specify -query 'search terms' ."
-  |        _,  _, "",  _ -> failwith "Need path to an mbox file."
+  | "build_index",  _, "",  _ -> failwith "Need path to an mbox file."
   |        _,  _,  _, "" -> failwith "Need name of the mailing list."
   |        _,  _,  _,  _ ->
     let data_dir =
