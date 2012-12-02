@@ -23,9 +23,18 @@ let replace_illegal_chars s : unit =
 
 
 let tokenize s : string list =
-  replace_illegal_chars s; s
+  let is_valid_length token =
+    let file_ext_len = 4 in
+    let max_filename_len = 150 in
+    let max_token_length = max_filename_len - file_ext_len in
+
+    let length = String.length token in
+    length > 0 && length < max_token_length
+  in
+  replace_illegal_chars s;
+  s
   |> Str.split RegExp.white_spaces_and_newlines
-  |> List.filter (fun s -> let len = String.length s in len > 0 && len < 255)
+  |> List.filter is_valid_length
   |> List.map String.lowercase
 
 
