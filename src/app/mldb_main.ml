@@ -9,6 +9,8 @@ type options =
   ; dir_index    : string
   ; operation    : string
   ; query        : string
+  ; srv_addr     : string
+  ; srv_port     : int
   }
 
 
@@ -21,6 +23,8 @@ let parse_options () =
   let list_name = ref "" in
   let operation = ref "" in
   let query     = ref "" in
+  let srv_addr  = ref "127.0.0.1" in
+  let srv_port  = ref 8888 in
 
   let speclist = Arg.align
     [ ("-mbox-file", Arg.Set_string mbox_file, " Path to mbox file.")
@@ -28,6 +32,8 @@ let parse_options () =
     ; ("-list-name", Arg.Set_string list_name, " Name of the mailing list.")
     ; ("-operation", Arg.Set_string operation, " Operation to perform.")
     ; ("-query",     Arg.Set_string query,     " Search query (if operation is 'search').")
+    ; ("-srv-addr",  Arg.Set_string srv_addr,  " Server address.")
+    ; ("-srv-port",  Arg.Set_int    srv_port,  " Server port.")
     ]
   in
 
@@ -48,7 +54,49 @@ let parse_options () =
     ; dir_index    = String.concat "/" [data_dir; "index"]
     ; operation    = !operation
     ; query        = String.lowercase !query
+    ; srv_addr     = !srv_addr
+    ; srv_port     = !srv_port
     }
+
+
+let index_load dir =
+  print_endline "LOADING INDEX...";
+  let start_time = Sys.time () in
+  let index = Mldb.Index.load dir in
+  let time_to_load = (Sys.time ()) -. start_time in
+  printf "LOAD TIME: %f\n" time_to_load;
+  index
+
+
+let index_search index query =
+  let start_time = Sys.time () in
+  let results = Mldb.Index.lookup index query in
+  let time_to_query = (Sys.time ()) -. start_time in
+  printf "LOOKUP TIME: %f\n" time_to_query;
+  results
+
+
+let serve index addr port =
+  print_endline "STARTING SERVER";
+
+  let server ic oc =
+    let rec serve eof = if eof then () else
+      output_string oc "? ";
+      flush oc;
+      let query, eof = try input_line ic, eof with End_of_file -> "", true in
+      let results = match index_search index query with
+        | [] -> "No match found."
+        | rs -> String.concat "\n" rs
+      in
+      output_string oc (sprintf "=>\n%s\n\n\n" results);
+      flush oc;
+      serve eof
+    in
+    serve false
+  in
+
+  let inet_addr = Unix.inet_addr_of_string addr in
+  Unix.establish_server server (Unix.ADDR_INET (inet_addr, port))
 
 
 let main () =
@@ -59,23 +107,14 @@ let main () =
     let msg_stream = Mldb.Mbox.msg_stream opt.mbox_file in
     Mldb.Index.build opt.dir_index opt.dir_messages msg_stream
 
+  | "serve" ->
+    serve (index_load opt.dir_index) opt.srv_addr opt.srv_port
+
   | "search" ->
-    let start_time = Sys.time () in
-    let index = Mldb.Index.load opt.dir_index in
-    let time_to_load = (Sys.time ()) -. start_time in
-
-    let start_time = Sys.time () in
-    let results = Mldb.Index.lookup index opt.query in
-    let time_to_query = (Sys.time ()) -. start_time in
-
-    let results_formatted = match results with
-      | [] -> "No match found."
-      | rs -> String.concat "\n" rs
-    in
-
-    printf "%s\n\n" results_formatted;
-    printf "LOAD   TIME: %f\n" time_to_load;
-    printf "LOOKUP TIME: %f\n" time_to_query
+    ( match index_search (index_load opt.dir_index) opt.query with
+      | [] -> print_endline "No match found."
+      | rs -> print_endline (String.concat "\n" rs)
+    )
 
   | other -> failwith ("Invalid operation: " ^ other)
 
