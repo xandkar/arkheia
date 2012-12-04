@@ -81,12 +81,12 @@ let index_search index query =
 
 
 let serve index addr port =
-  print_endline "WAITING FOR CONNECTION";
+  printf "SERVER LISTENING on %s:%d\n%!" addr port;
 
   let server ic oc =
     print_endline "CONNECTION ESTABLISHED";
     let rec serve eof = if eof then () else
-      print_endline "WAITING A REQUEST";
+      print_endline "WAITING FOR A QUERY";
       output_string oc "? ";
       flush oc;
       let query, eof = try input_line ic, eof with End_of_file -> "", true in
