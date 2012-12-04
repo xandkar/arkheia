@@ -61,10 +61,14 @@ let parse_options () =
 
 let index_load dir =
   print_endline "LOADING INDEX...";
-  let start_time = Sys.time () in
+  let start_time_cpu, start_time_wall = Sys.time (), Unix.gettimeofday () in
   let index = Mldb.Index.load dir in
-  let time_to_load = (Sys.time ()) -. start_time in
-  printf "LOAD TIME: %f\n" time_to_load;
+  let time_cpu, time_wall =
+    (Sys.time ()) -. start_time_cpu,
+    (Unix.gettimeofday ()) -. start_time_wall
+  in
+  printf "LOAD TIME,  CPU: %f\n" time_cpu;
+  printf "LOAD TIME, WALL: %f\n" time_wall;
   index
 
 
