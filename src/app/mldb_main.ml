@@ -40,11 +40,11 @@ let parse_options () =
   Arg.parse speclist (fun _ -> ()) usage;
 
   match !operation, !query, !mbox_file, !list_name with
-  |       "",  _,  _,  _ -> failwith "Please specify an operation to perform."
-  | "search", "",  _,  _ -> failwith "Please specify -query 'search terms' ."
+  |            "",  _,  _,  _ -> failwith "Please specify an operation to perform."
+  |      "search", "",  _,  _ -> failwith "Please specify -query 'search terms' ."
   | "build_index",  _, "",  _ -> failwith "Need path to an mbox file."
-  |        _,  _,  _, "" -> failwith "Need name of the mailing list."
-  |        _,  _,  _,  _ ->
+  |             _,  _,  _, "" -> failwith "Need name of the mailing list."
+  |             _,  _,  _,  _ ->
     let data_dir =
       String.concat "/" [!data_dir; "lists"; !list_name]
     in
