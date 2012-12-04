@@ -67,8 +67,8 @@ let index_load dir =
     (Sys.time ()) -. start_time_cpu,
     (Unix.gettimeofday ()) -. start_time_wall
   in
-  printf "LOAD TIME, CPU : %f\n" time_cpu;
-  printf "LOAD TIME, WALL: %f\n" time_wall;
+  printf "LOAD TIME, CPU : %f\n%!" time_cpu;
+  printf "LOAD TIME, WALL: %f\n%!" time_wall;
   index
 
 
@@ -76,7 +76,7 @@ let index_search index query =
   let start_time = Sys.time () in
   let results = Mldb.Index.lookup index query in
   let time_to_query = (Sys.time ()) -. start_time in
-  printf "LOOKUP TIME: %f\n" time_to_query;
+  printf "LOOKUP TIME: %f\n%!" time_to_query;
   results
 
 
