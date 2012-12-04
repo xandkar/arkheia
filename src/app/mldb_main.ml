@@ -81,10 +81,12 @@ let index_search index query =
 
 
 let serve index addr port =
-  print_endline "STARTING SERVER";
+  print_endline "WAITING FOR CONNECTION";
 
   let server ic oc =
+    print_endline "CONNECTION ESTABLISHED";
     let rec serve eof = if eof then () else
+      print_endline "WAITING A REQUEST";
       output_string oc "? ";
       flush oc;
       let query, eof = try input_line ic, eof with End_of_file -> "", true in
