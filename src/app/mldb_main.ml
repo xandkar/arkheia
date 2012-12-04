@@ -67,7 +67,7 @@ let index_load dir =
     (Sys.time ()) -. start_time_cpu,
     (Unix.gettimeofday ()) -. start_time_wall
   in
-  printf "LOAD TIME,  CPU: %f\n" time_cpu;
+  printf "LOAD TIME, CPU : %f\n" time_cpu;
   printf "LOAD TIME, WALL: %f\n" time_wall;
   index
 
