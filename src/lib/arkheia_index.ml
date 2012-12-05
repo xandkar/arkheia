@@ -1,10 +1,10 @@
 open Batteries
 
 
-module GZ     = Mldb_gz
-module Msg    = Mldb_msg
-module RegExp = Mldb_regexp
-module Utils  = Mldb_utils
+module GZ     = Arkheia_gz
+module Msg    = Arkheia_msg
+module RegExp = Arkheia_regexp
+module Utils  = Arkheia_utils
 
 
 type t =

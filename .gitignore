@@ -1,5 +1,5 @@
 _build/
-bin/mldb
+bin/
 data/
 *.annot
 *.cmo

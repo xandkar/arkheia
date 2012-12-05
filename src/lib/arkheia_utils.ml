@@ -1,7 +1,7 @@
 open Batteries
 
 
-module RegExp = Mldb_regexp
+module RegExp = Arkheia_regexp
 
 
 exception Mkdir_failure of int * string

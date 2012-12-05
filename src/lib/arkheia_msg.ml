@@ -2,9 +2,9 @@ open Batteries
 open Printf
 
 
-module GZ     = Mldb_gz
-module RegExp = Mldb_regexp
-module Utils  = Mldb_utils
+module GZ     = Arkheia_gz
+module RegExp = Arkheia_regexp
+module Utils  = Arkheia_utils
 
 
 type t =

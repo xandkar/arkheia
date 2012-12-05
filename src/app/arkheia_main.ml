@@ -62,7 +62,7 @@ let parse_options () =
 let index_load dir =
   print_endline "LOADING INDEX...";
   let start_time_cpu, start_time_wall = Sys.time (), Unix.gettimeofday () in
-  let index = Mldb.Index.load dir in
+  let index = Arkheia.Index.load dir in
   let time_cpu, time_wall =
     (Sys.time ()) -. start_time_cpu,
     (Unix.gettimeofday ()) -. start_time_wall
@@ -74,7 +74,7 @@ let index_load dir =
 
 let index_search index query =
   let start_time = Sys.time () in
-  let results = Mldb.Index.lookup index query in
+  let results = Arkheia.Index.lookup index query in
   let time_to_query = (Sys.time ()) -. start_time in
   printf "LOOKUP TIME: %f\n%!" time_to_query;
   results
@@ -110,8 +110,8 @@ let main () =
 
   match opt.operation with
   | "build_index" ->
-    let msg_stream = Mldb.Mbox.msg_stream opt.mbox_file in
-    Mldb.Index.build opt.dir_index opt.dir_messages msg_stream
+    let msg_stream = Arkheia.Mbox.msg_stream opt.mbox_file in
+    Arkheia.Index.build opt.dir_index opt.dir_messages msg_stream
 
   | "serve" ->
     serve (index_load opt.dir_index) opt.srv_addr opt.srv_port

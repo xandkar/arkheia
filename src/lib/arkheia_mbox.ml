@@ -1,5 +1,5 @@
-module GZ     = Mldb_gz
-module RegExp = Mldb_regexp
+module GZ     = Arkheia_gz
+module RegExp = Arkheia_regexp
 
 
 let is_msg_start l =

@@ -1,5 +1,5 @@
 LIBS="batteries,calendar,camlzip"
-EXECUTABLE_NAME="mldb"
+EXECUTABLE_NAME="arkheia"
 EXECUTABLE_TYPE="native"
 
 
