@@ -51,3 +51,8 @@ Low-level Roadmap
 * Index headers in addition to body
 * Implement Suffix Tree indexing
 * Implement substring matching
+
+
+Random thoughts/ideas
+---------------------
+* SSH shell for interactive admin and client sessions
