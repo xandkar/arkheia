@@ -24,6 +24,7 @@ Concepts
         - Links (a set of IDs (references in a paper, parents in a mailing list
           thread, etc))
     - set of arbitrary, optional meta headers
+* Query language: a subset of SQL
 
 
 High-level Roadmap
