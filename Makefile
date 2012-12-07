@@ -1,24 +1,35 @@
-LIBS="batteries,calendar,camlzip"
+EXT_LIBS="batteries,calendar,camlzip"
+
+DIR_BIN="bin"
+DIR_BUILD="_build"
+DIR_SRC_LIB="src/lib"
+DIR_SRC_APP="src/app"
+
 EXECUTABLE_NAME="arkheia"
 EXECUTABLE_TYPE="native"
+EXECUTABLE_LINK="$(EXECUTABLE_NAME)_main.$(EXECUTABLE_TYPE)"
+EXECUTABLE_TARGET="$(DIR_SRC_APP)/$(EXECUTABLE_LINK)"
+EXECUTABLE_FILE="$(DIR_BUILD)/$(EXECUTABLE_TARGET)"
 
 
 build:
-	@ocamlbuild -tag thread -use-ocamlfind -package $(LIBS) -I src/lib \
-        src/app/$(EXECUTABLE_NAME)_main.$(EXECUTABLE_TYPE)
-	@mkdir -p bin
-	@mv $(EXECUTABLE_NAME)_main.$(EXECUTABLE_TYPE) bin/$(EXECUTABLE_NAME)
+	@ocamlbuild -tag thread -use-ocamlfind -package $(EXT_LIBS) \
+	    -I $(DIR_SRC_LIB) $(EXECUTABLE_TARGET)
+	@mkdir -p $(DIR_BIN)
+	@cp -f $(EXECUTABLE_FILE) $(DIR_BIN)/$(EXECUTABLE_NAME)
+	@rm -f $(EXECUTABLE_LINK)
 
 
 clean:
-	@rm -rf bin/
+	@rm -rf $(DIR_BIN)
 	@ocamlbuild -clean
 
 
 purge:
-	@rm -rf bin/
+	@rm -rf $(DIR_BIN)
+	@rm -rf $(DIR_BUILD)
 	@find . \
             -iname '*.o' \
         -or -iname '*.cmi' \
-        -or -iname "*.cmx" \
+        -or -iname '*.cmx' \
         | xargs rm -f
