@@ -8,7 +8,7 @@ module Utils  = Arkheia_utils
 
 
 type t =
-  (string, (string * int * int list) list) Map.t
+  (string, (string * int * int list) list) Hashtbl.t
 
 
 let illegal_chars : char list =
@@ -62,73 +62,49 @@ let count_and_positions tokens =
 
 
 let build dir_index dir_messages msg_stream : unit =
-  let write_word_data msg_id (word, (count, positions)) =
-    let positions = String.concat "," (List.map string_of_int positions) in
-    let data = (Printf.sprintf "%s|%d|%s\n" msg_id count positions) in
+  let write_word_data index msg_id (word, (count, positions)) =
+    let data = msg_id, count, positions in
 
-    let dir = Filename.concat dir_index (string_of_char word.[0]) in
-    Utils.mkpath dir;
+    try
+      let old_data = Hashtbl.find index word in
+      Hashtbl.replace index word (data::old_data)
 
-    let word_file = Filename.concat dir (word ^ ".csv") in
-    let modes = [Open_append; Open_creat; Open_binary] in
-    let perms = 0o666 in
-
-    let oc = open_out_gen modes perms word_file in
-    output_string oc data;
-    close_out oc
+    with Not_found ->
+      Hashtbl.add index word [data]
   in
 
-  let process_message msg_txt =
+  let process_message index msg_txt =
     let msg = Msg.parse msg_txt in
     Msg.save dir_messages msg_txt msg.Msg.id;
+
     let words = (count_and_positions (tokenize msg.Msg.body)) in
-    List.iter (write_word_data msg.Msg.id) words;
+    List.iter (write_word_data index msg.Msg.id) words;
   in
 
   Utils.mkpath dir_messages;
   Utils.mkpath dir_index;
 
-  Stream.iter process_message msg_stream
+  let index = Hashtbl.create 1 in
+  Stream.iter (process_message index) msg_stream;
+
+  let index_file = Filename.concat dir_index "index.dat" in
+  let oc = open_out_bin index_file in
+  Marshal.to_channel oc index [];
+  close_out oc
 
 
 let load (dir : string) : t =
-  let paths =
-    List.flatten
-    ( Array.fold_left
-      ( fun acc d ->
-          ( Array.fold_left
-            ( fun acc file -> (Filename.concat (Filename.concat dir d) file)::acc
-            ) [] (Sys.readdir (Filename.concat dir d))
-          )::acc
-      ) [] (Sys.readdir dir)
-    )
-  in
-
-  let rec read index = function
-    | [] -> index
-    | p::ps ->
-      let word = Filename.chop_suffix (Filename.basename p) ".csv" in
-      let read_line l =
-        try
-          Scanf.sscanf l "%s@|%d|%s@\n"
-          ( fun a b c ->
-              let msg_id = a in
-              let frequency = b in
-              let positions = (List.map int_of_string (Str.split RegExp.comma c)) in
-              msg_id, frequency, positions
-          )
-        with Scanf.Scan_failure e -> print_endline (dump e); assert false
-      in
-      let data = List.map read_line (Utils.lines_of p) in
-      read (Map.add word data index) ps
-  in
-  read Map.empty paths
+  let ic = open_in_bin (Filename.concat dir "index.dat") in
+  let index = Marshal.from_channel ic in
+  let index = (index : (string, (string * int * int list) list) Hashtbl.t) in
+  close_in ic;
+  index
 
 
 let lookup (index : t) (query : string) : string list =
   try
     let words = Str.split RegExp.white_spaces query in
-    let msg_lists = List.map (fun w -> Map.find w index) words in
+    let msg_lists = List.map (fun w -> Hashtbl.find index w) words in
     let msg_sets = List.map (List.map (Tuple.Tuple3.first) |- Set.of_list) msg_lists in
 
     match msg_sets with

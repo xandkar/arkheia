@@ -39,11 +39,11 @@ Low-level Roadmap
 * Hashing of supplied document IDs (which may contain any character and make
   filesystem storage error-prone)
 * Store individual documents as marshalled records (as opposed to raw text)
-* Switch to in-memory index construction (disk is much slower than I
-  realized...)
-* Switch to single file marshalling (again, due to slow disk) at least until
+* ~~Switch to in-memory index construction (disk is much slower than I
+  realized...)~~
+* ~~Switch to single file marshalling (again, due to slow disk) at least until
   more infrustructure (HTTP server and front-end) is added and I can look into
-  specialized binary formats
+  specialized binary formats~~
 * Add a simple HTTP server
 * Add a simple HTTP access API (not sure of serialization yet, but JSON seems
   fine)
