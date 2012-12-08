@@ -41,4 +41,8 @@ let lines_of (path : string) : string list =
 
 
 let hash_of_string s =
-  Digest.to_hex (Digest.string s)
+  let hash = Cryptokit.Hash.ripemd160 () in
+  let hex = Cryptokit.Hexa.encode () in
+  hash#add_string s;
+  hex#put_string hash#result;
+  hex#get_string
