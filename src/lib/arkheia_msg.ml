@@ -45,8 +45,9 @@ let parse (msg_txt : string) : t =
       "TOP_FROM", h
     else
       match Str.full_split RegExp.header_tag h with
+      | [Str.Delim tag]                -> Utils.strip tag, ""
       | [Str.Delim tag; Str.Text data] -> Utils.strip tag, Utils.strip data
-      | _ -> print_endline h; assert false
+      | _ -> print_endline (dump h); assert false
   in
 
   let pack_msg hs bs =
