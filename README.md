@@ -38,7 +38,7 @@ Low-level Roadmap
 -----------------
 * Hashing of supplied document IDs (which may contain any character and make
   filesystem storage error-prone)
-* Store individual documents as marshalled records (as opposed to raw text)
+* ~~Store individual documents as marshalled records (as opposed to raw text)~~
 * ~~Switch to in-memory index construction (disk is much slower than I
   realized...)~~
 * ~~Switch to single file marshalling (again, due to slow disk) at least until

@@ -131,13 +131,27 @@ let print msg =
   print_newline ()
 
 
-let save dir txt id =
+let save_as_txt dir txt id =
   let file_ext = ".eml.gz" in
   let file_name = id ^ file_ext in
-  let path = Filename.concat dir file_name in
-  let oc = GZ.open_out path in
+  let file_path = Filename.concat dir file_name in
+
+  let oc = GZ.open_out file_path in
   begin
     try GZ.output_string oc txt
     with e -> GZ.close_out oc; raise e
   end;
   GZ.close_out oc
+
+
+let save_as_bin dir (msg : t) =
+  let file_ext = ".dat" in
+  let file_name = msg.id ^ file_ext in
+  let file_path = Filename.concat dir file_name in
+
+  let oc = open_out_bin file_path in
+  begin
+    try Marshal.to_channel oc msg []
+    with e -> close_out oc; raise e
+  end;
+  close_out oc

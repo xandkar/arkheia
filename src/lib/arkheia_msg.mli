@@ -12,4 +12,6 @@ type t =
 
 val parse : string -> t
 
-val save : string -> string -> string -> unit
+val save_as_txt : string -> string -> string -> unit
+
+val save_as_bin : string -> t -> unit
