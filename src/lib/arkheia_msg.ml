@@ -137,10 +137,22 @@ let print msg =
   print_newline ()
 
 
+let assert_unique path =
+  if Sys.file_exists path then
+    begin
+      printf "FILE EXISTS: %s\n%!" path;
+      assert false
+    end
+  else
+    ()
+
+
 let save_as_txt dir txt id =
   let file_ext = ".eml.gz" in
   let file_name = id ^ file_ext in
   let file_path = Filename.concat dir file_name in
+
+  assert_unique file_path;
 
   let oc = GZ.open_out file_path in
   begin
@@ -154,6 +166,8 @@ let save_as_bin dir (msg : t) =
   let file_ext = ".dat" in
   let file_name = msg.id ^ file_ext in
   let file_path = Filename.concat dir file_name in
+
+  assert_unique file_path;
 
   let oc = open_out_bin file_path in
   begin
