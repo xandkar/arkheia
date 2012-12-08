@@ -61,6 +61,16 @@ let count_and_positions tokens =
   data []
 
 
+let load (dir : string) : t =
+  try
+    let ic = open_in_bin (Filename.concat dir "index.dat") in
+    let index = (Marshal.from_channel ic : t) in
+    close_in ic;
+    index
+  with Sys_error _ ->
+    Hashtbl.create 1
+
+
 let build dir_index dir_messages msg_stream : unit =
   let write_word_data index msg_id (word, (count, positions)) =
     let data = msg_id, count, positions in
@@ -84,21 +94,13 @@ let build dir_index dir_messages msg_stream : unit =
   Utils.mkpath dir_messages;
   Utils.mkpath dir_index;
 
-  let index = Hashtbl.create 1 in
+  let index = load dir_index in
   Stream.iter (process_message index) msg_stream;
 
   let index_file = Filename.concat dir_index "index.dat" in
   let oc = open_out_bin index_file in
   Marshal.to_channel oc index [];
   close_out oc
-
-
-let load (dir : string) : t =
-  let ic = open_in_bin (Filename.concat dir "index.dat") in
-  let index = Marshal.from_channel ic in
-  let index = (index : (string, (string * int * int list) list) Hashtbl.t) in
-  close_in ic;
-  index
 
 
 let lookup (index : t) (query : string) : string list =
