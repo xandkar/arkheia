@@ -36,8 +36,8 @@ then full-text searching.
 
 Low-level Roadmap
 -----------------
-* Hashing of supplied document IDs (which may contain any character and make
-  filesystem storage error-prone)
+* ~~Hashing of supplied document IDs (which may contain any character and make
+  filesystem storage error-prone)~~
 * ~~Store individual documents as marshalled records (as opposed to raw text)~~
 * ~~Switch to in-memory index construction (disk is much slower than I
   realized...)~~
