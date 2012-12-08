@@ -38,3 +38,7 @@ let lines_of (path : string) : string list =
   let lines = try read [] with e -> close_in ic; raise e in
   close_in ic;
   lines
+
+
+let hash_of_string s =
+  Digest.to_hex (Digest.string s)

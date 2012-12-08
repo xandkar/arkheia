@@ -15,6 +15,7 @@ type t =
   ; in_reply_to : string
   ; references  : string list
   ; id          : string
+  ; id_orig     : string
   ; body        : string
   }
 
@@ -59,10 +60,13 @@ let parse (msg_txt : string) : t =
       | ("In-Reply-To:", data)::hs -> pack {msg with in_reply_to = data} hs
 
       | ("References:" , data)::hs ->
-        pack {msg with references  = parse_msg_ids data} hs
+        let references = List.map Utils.hash_of_string (parse_msg_ids data) in
+        pack {msg with references = references} hs
 
       | ("Message-ID:" , data)::hs ->
-        pack {msg with id = parse_msg_id  data} hs
+        let id_orig = parse_msg_id data in
+        let id = Utils.hash_of_string id_orig in
+        pack {msg with id = id; id_orig = id_orig} hs
 
       | _ -> assert false
     in
@@ -74,6 +78,7 @@ let parse (msg_txt : string) : t =
       ; in_reply_to = ""
       ; references  = []
       ; id          = ""
+      ; id_orig     = ""
       ; body        = String.concat "\n" bs
       }
     in

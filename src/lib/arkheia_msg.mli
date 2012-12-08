@@ -6,6 +6,7 @@ type t =
   ; in_reply_to : string
   ; references  : string list
   ; id          : string
+  ; id_orig     : string
   ; body        : string
   }
 
