@@ -135,6 +135,14 @@ let print msg =
   print_newline ()
 
 
+let path_of dir id ext =
+  Filename.concat dir (id ^ ext)
+
+
+let is_unique dir id =
+  not (Sys.file_exists (path_of dir id ".dat"))
+
+
 let assert_unique path =
   if Sys.file_exists path then
     begin
@@ -146,10 +154,7 @@ let assert_unique path =
 
 
 let save_as_txt dir txt id =
-  let file_ext = ".eml.gz" in
-  let file_name = id ^ file_ext in
-  let file_path = Filename.concat dir file_name in
-
+  let file_path = path_of dir id ".eml.gz" in
   assert_unique file_path;
 
   let oc = GZ.open_out file_path in
@@ -161,10 +166,7 @@ let save_as_txt dir txt id =
 
 
 let save_as_bin dir (msg : t) =
-  let file_ext = ".dat" in
-  let file_name = msg.id ^ file_ext in
-  let file_path = Filename.concat dir file_name in
-
+  let file_path = path_of dir msg.id ".dat" in
   assert_unique file_path;
 
   let oc = open_out_bin file_path in

@@ -13,6 +13,8 @@ type t =
 
 val parse : string -> t
 
+val is_unique : string -> string -> bool
+
 val save_as_txt : string -> string -> string -> unit
 
 val save_as_bin : string -> t -> unit

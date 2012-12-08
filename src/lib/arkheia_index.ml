@@ -85,10 +85,14 @@ let build dir_index dir_messages msg_stream : unit =
 
   let process_message index msg_txt =
     let msg = Msg.parse msg_txt in
-    Msg.save_as_bin dir_messages msg;
-
-    let words = (count_and_positions (tokenize msg.Msg.body)) in
-    List.iter (write_word_data index msg.Msg.id) words;
+    if Msg.is_unique dir_messages msg.Msg.id then
+      begin
+        Msg.save_as_bin dir_messages msg;
+        let words = (count_and_positions (tokenize msg.Msg.body)) in
+        List.iter (write_word_data index msg.Msg.id) words
+      end
+    else
+      print_endline "Document aready exists, skipping."
   in
 
   Utils.mkpath dir_messages;
