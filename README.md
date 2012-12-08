@@ -48,6 +48,7 @@ Low-level Roadmap
 * Add a simple HTTP access API (not sure of serialization yet, but JSON seems
   fine)
 * Add a simple web client
+* Store documents in a single, random-access binary file
 * Index headers in addition to body
 * Implement Suffix Tree indexing
 * Implement substring matching
