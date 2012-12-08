@@ -52,7 +52,7 @@ let parse (msg_txt : string) : t =
 
   let pack_msg hs bs =
     let rec pack msg = function
-      | [] -> msg
+      | [] -> {msg with id = Utils.hash_of_string msg_txt}
 
       | ("TOP_FROM"    , data)::hs -> pack {msg with top_from    = data} hs
       | ("From:"       , data)::hs -> pack {msg with from        = data} hs
@@ -65,9 +65,7 @@ let parse (msg_txt : string) : t =
         pack {msg with references = references} hs
 
       | ("Message-ID:" , data)::hs ->
-        let id_orig = parse_msg_id data in
-        let id = Utils.hash_of_string id_orig in
-        pack {msg with id = id; id_orig = id_orig} hs
+        pack {msg with id_orig = parse_msg_id data} hs
 
       | _ -> assert false
     in
