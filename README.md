@@ -34,40 +34,40 @@ necessarily storing application data, so updates will receive less attention
 then full-text searching.
 
 
-Low-level Roadmap
------------------
-* Storage:
-    + ~~Switch to in-memory index construction (disk is much slower than I
-      realized...)~~
+Detailed Roadmap
+----------------
 
-    + ~~Hashing of supplied document IDs (which may contain any character and
-      make filesystem storage error-prone)~~
+### Storage:
+* ~~Switch to in-memory index construction (disk is much slower than I
+  realized...)~~
 
-    + ~~Store individual documents as marshalled records (as opposed to raw
-      text)~~
+* ~~Hashing of supplied document IDs (which may contain any character and
+  make filesystem storage error-prone)~~
 
-    + ~~Switch to single file marshalling (again, due to slow disk) at least
-      until more infrustructure (HTTP server and front-end) is added and I can
-      look into specialized binary formats~~
+* ~~Store individual documents as marshalled records (as opposed to raw
+  text)~~
 
-    + Storage engine:
-        - Use a 3rd party storage engine (BDB? Kyoto Cabinet? LevelDB?)
-        - Storage engine abstracted and swappable
-        - Implement a simple k/v storage engine
+* ~~Switch to single file marshalling (again, due to slow disk) at least
+  until more infrustructure (HTTP server and front-end) is added and I can
+  look into specialized binary formats~~
 
-* Web interface:
-    + Simple HTTP server
-    + Simple HTTP access API (not sure of serialization yet, but JSON seems
-      fine)
-    + Simple web client
+* Storage engine:
+    - Use a 3rd party storage engine (BDB? Kyoto Cabinet? LevelDB?)
+    - Storage engine abstracted and swappable
+    - Implement a simple k/v storage engine
 
+### Index
 * Index headers in addition to body
-
 * Implement Suffix Tree indexing
-
 * Implement substring matching
 
+### Interface:
+* Web
+    - Simple HTTP server
+    - Simple HTTP access API (not sure of serialization yet, but JSON seems
+      fine)
+    - Simple web client
 
-Random thoughts/ideas
----------------------
-* SSH shell for interactive admin and client sessions
+* Interactive shell
+    - local
+    - Over SSH?
