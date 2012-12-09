@@ -1,8 +1,8 @@
 αρχεια
 ======
 
-Currently experimental, full-text, document database management system with
-primarily text mining in mind (frequent reads, rare updates).
+Experimental, full-text, document database management system with primarily
+text mining in mind (frequent reads, rare updates).
 
 Originally I set-out to mine mailing list archives, but realized that the
 concept generalizes to any collection of textual documents.
@@ -44,14 +44,17 @@ Low-level Roadmap
 * ~~Switch to single file marshalling (again, due to slow disk) at least until
   more infrustructure (HTTP server and front-end) is added and I can look into
   specialized binary formats~~
+
 * Add a simple HTTP server
 * Add a simple HTTP access API (not sure of serialization yet, but JSON seems
   fine)
 * Add a simple web client
-* Store documents in a single, random-access binary file
+* Store data in a 3rd party storage engine (BDB? Kyoto Cabinet? LevelDB?)
+* Storage engine abstracted and swappable
 * Index headers in addition to body
 * Implement Suffix Tree indexing
 * Implement substring matching
+* Implement a simple k/v storage engine
 
 
 Random thoughts/ideas
