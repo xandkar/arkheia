@@ -38,9 +38,6 @@ Detailed Roadmap
 ----------------
 
 ### Storage:
-* ~~Switch to in-memory index construction (disk is much slower than I
-  realized...)~~
-
 * ~~Hashing of supplied document IDs (which may contain any character and
   make filesystem storage error-prone)~~
 
@@ -56,10 +53,15 @@ Detailed Roadmap
     - Storage engine abstracted and swappable
     - Implement a simple k/v storage engine
 
+
 ### Index
+* ~~Switch to in-memory index construction (disk is much slower than I
+  realized...)~~
+
 * Index headers in addition to body
 * Implement Suffix Tree indexing
 * Implement substring matching
+
 
 ### Interface:
 * Web
