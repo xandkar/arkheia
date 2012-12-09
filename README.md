@@ -1,4 +1,4 @@
-αρχεια
+Αρχεια
 ======
 
 Experimental, full-text, document database management system with primarily
