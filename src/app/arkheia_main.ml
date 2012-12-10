@@ -90,7 +90,7 @@ let serve index addr port =
       output_string oc "? ";
       flush oc;
       let query, eof = try input_line ic, eof with End_of_file -> "", true in
-      let results = match index_search index query with
+      let results = match index_search index (String.lowercase query) with
         | [] -> "No match found."
         | rs -> String.concat "\n" rs
       in
