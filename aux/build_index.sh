@@ -1,6 +1,7 @@
 #! /usr/bin/env zsh
 
-LIST_NAME='erlang-questions'
+#LIST_NAME='erlang-questions'
+LIST_NAME='riak-users'
 
 DATA_DIR='data'
 ARCHIVE_DIR="$DATA_DIR/lists/$LIST_NAME/archive"
