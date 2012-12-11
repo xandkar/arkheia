@@ -7,7 +7,7 @@ ARCHIVE_DIR="$DATA_DIR/lists/$LIST_NAME/archive"
 
 
 main() {
-    for file in `ls -1 $ARCHIVE_DIR/*`;
+    for file in `ls -1 $ARCHIVE_DIR/*.gz`;
     do
         echo $file
         time ./bin/arkheia \
