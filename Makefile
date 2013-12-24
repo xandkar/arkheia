@@ -1,4 +1,4 @@
-EXT_LIBS="calendar,camlzip,cryptokit"
+EXT_LIBS="calendar,zip,cryptokit"
 
 DIR_BIN="bin"
 DIR_BUILD="_build"
