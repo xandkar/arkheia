@@ -1,6 +1,3 @@
-open Batteries
-
-
 module RegExp = Arkheia_regexp
 
 

@@ -1,4 +1,3 @@
-open Batteries
 open Printf
 
 
@@ -28,8 +27,13 @@ let is_head_data l = Str.string_match RegExp.header_data l 0
 
 
 let parse_msg_id id =
-  try Scanf.sscanf id "<%s@>" (fun id -> id)
-  with e -> print_endline id; print_endline (dump e); assert false
+  try
+    Scanf.sscanf id "<%s@>" (fun id -> id)
+  with e ->
+    ( print_endline id
+    ; print_endline (Printexc.to_string e)
+    ; assert false
+    )
 
 
 let parse_msg_ids data = data
@@ -47,7 +51,10 @@ let parse (msg_txt : string) : t =
       match Str.full_split RegExp.header_tag h with
       | [Str.Delim tag]                -> Utils.strip tag, ""
       | [Str.Delim tag; Str.Text data] -> Utils.strip tag, Utils.strip data
-      | _ -> print_endline (dump h); assert false
+      | _ ->
+        ( print_endline h
+        ; assert false
+        )
   in
 
   let pack_msg hs bs =

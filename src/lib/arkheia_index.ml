@@ -1,6 +1,3 @@
-open Batteries
-
-
 module GZ     = Arkheia_gz
 module Msg    = Arkheia_msg
 module RegExp = Arkheia_regexp
@@ -9,6 +6,10 @@ module Utils  = Arkheia_utils
 
 type t =
   (string, (string * int * int list) list) Hashtbl.t
+
+
+let fst_of_triple = function
+  | fst, _, _ -> fst
 
 
 let illegal_chars : char list =
@@ -56,7 +57,7 @@ let count_and_positions tokens =
 
   Hashtbl.fold
   ( fun token (count, positions) data' ->
-      (token, (count, List.sort positions))::data'
+      (token, (count, List.sort compare positions))::data'
   )
   data []
 
@@ -107,15 +108,25 @@ let build dir_index dir_messages msg_stream : unit =
   close_out oc
 
 
+
+module StrSet =
+struct
+  include (Set.Make (String))
+
+  let of_list (l : string list) : t =
+    List.fold_left (fun set e -> add e set) empty l
+end
+
 let lookup (index : t) (query : string) : string list =
+  let ( |- ) f g x = g (f x) in
   try
     let words = Str.split RegExp.white_spaces query in
     let msg_lists = List.map (fun w -> Hashtbl.find index w) words in
-    let msg_sets = List.map (List.map (Tuple.Tuple3.first) |- Set.of_list) msg_lists in
+    let msg_sets = List.map ((List.map fst_of_triple) |- StrSet.of_list) msg_lists in
 
     match msg_sets with
     | s::ss ->
-      List.fold_left Set.intersect s ss |> Set.enum |> List.of_enum
+      List.fold_left StrSet.inter s ss |> StrSet.elements
     | _ ->
       assert false
 
