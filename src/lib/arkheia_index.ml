@@ -1,3 +1,6 @@
+module Hashtbl = MoreLabels.Hashtbl
+module List    = ListLabels
+
 module GZ     = Arkheia_gz
 module Msg    = Arkheia_msg
 module RegExp = Arkheia_regexp
@@ -35,31 +38,30 @@ let tokenize s : string list =
   replace_illegal_chars s;
   s
   |> Str.split RegExp.white_spaces_and_newlines
-  |> List.filter is_valid_length
-  |> List.map String.lowercase
+  |> List.filter ~f:is_valid_length
+  |> List.map ~f:String.lowercase
 
 
 let count_and_positions tokens =
   let hist = Utils.histogram tokens in
   let data = Hashtbl.create 1 in
 
-  List.iteri
-  ( fun position token ->
+  List.iteri ~f:(
+    fun position token ->
       try
         let (count, ps) = Hashtbl.find data token in
-        Hashtbl.replace data token (count, position::ps)
+        Hashtbl.replace data ~key:token ~data:(count, position::ps)
 
       with Not_found ->
         let count = Hashtbl.find hist token in
-        Hashtbl.add data token (count, [position])
+        Hashtbl.add data ~key:token ~data:(count, [position])
   )
   tokens;
 
-  Hashtbl.fold
-  ( fun token (count, positions) data' ->
-      (token, (count, List.sort compare positions))::data'
+  Hashtbl.fold data ~init:[] ~f:(
+    fun ~key:token ~data:(count, positions) data' ->
+      (token, (count, List.sort ~cmp:compare positions))::data'
   )
-  data []
 
 
 let load (dir : string) : t =
@@ -90,7 +92,7 @@ let build dir_index dir_messages msg_stream : unit =
       begin
         Msg.save_as_bin dir_messages msg;
         let words = (count_and_positions (tokenize msg.Msg.body)) in
-        List.iter (write_word_data index msg.Msg.id) words
+        List.iter ~f:(write_word_data index msg.Msg.id) words
       end
     else
       print_endline "Document aready exists, skipping."
@@ -114,19 +116,19 @@ struct
   include (Set.Make (String))
 
   let of_list (l : string list) : t =
-    List.fold_left (fun set e -> add e set) empty l
+    List.fold_left l ~init:empty ~f:(fun set e -> add e set)
 end
 
 let lookup (index : t) (query : string) : string list =
   let ( |- ) f g x = g (f x) in
   try
     let words = Str.split RegExp.white_spaces query in
-    let msg_lists = List.map (fun w -> Hashtbl.find index w) words in
-    let msg_sets = List.map ((List.map fst_of_triple) |- StrSet.of_list) msg_lists in
+    let msg_lists = List.map ~f:(fun w -> Hashtbl.find index w) words in
+    let msg_sets = List.map ~f:((List.map ~f:fst_of_triple) |- StrSet.of_list) msg_lists in
 
     match msg_sets with
     | s::ss ->
-      List.fold_left StrSet.inter s ss |> StrSet.elements
+      List.fold_left ~f:StrSet.inter ~init:s ss |> StrSet.elements
     | _ ->
       assert false
 
