@@ -44,23 +44,23 @@ let tokenize s : string list =
 
 let count_and_positions tokens =
   let hist = Utils.histogram tokens in
-  let data = Hashtbl.create 1 in
+  let table = Hashtbl.create 1 in
 
   List.iteri ~f:(
     fun position token ->
       try
-        let (count, ps) = Hashtbl.find data token in
-        Hashtbl.replace data ~key:token ~data:(count, position::ps)
+        let (count, ps) = Hashtbl.find table token in
+        Hashtbl.replace table ~key:token ~data:(count, position::ps)
 
       with Not_found ->
         let count = Hashtbl.find hist token in
-        Hashtbl.add data ~key:token ~data:(count, [position])
+        Hashtbl.add table ~key:token ~data:(count, [position])
   )
   tokens;
 
-  Hashtbl.fold data ~init:[] ~f:(
-    fun ~key:token ~data:(count, positions) data' ->
-      (token, (count, List.sort ~cmp:compare positions))::data'
+  Hashtbl.fold table ~init:[] ~f:(
+    fun ~key:token ~data:(count, positions) acc ->
+      (token, (count, List.sort ~cmp:compare positions)) :: acc
   )
 
 
