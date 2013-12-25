@@ -1,6 +1,14 @@
 module Hashtbl = MoreLabels.Hashtbl
 module List    = ListLabels
 
+module StrSet =
+struct
+  include (Set.Make (String))
+
+  let of_list (l : string list) : t =
+    List.fold_left l ~init:empty ~f:(fun set e -> add e set)
+end
+
 module GZ     = Arkheia_gz
 module Msg    = Arkheia_msg
 module RegExp = Arkheia_regexp
@@ -113,15 +121,6 @@ let build dir_index dir_messages msg_stream : unit =
   Marshal.to_channel oc index [];
   close_out oc
 
-
-
-module StrSet =
-struct
-  include (Set.Make (String))
-
-  let of_list (l : string list) : t =
-    List.fold_left l ~init:empty ~f:(fun set e -> add e set)
-end
 
 let lookup (index : t) (query : string) : string list =
   try
