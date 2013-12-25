@@ -6,7 +6,7 @@ build_old:
 	@ocamlbuild \
 		-tag thread \
 		-use-ocamlfind \
-		-package calendar,zip,cryptokit \
+		-package calendar,zip \
 		-I $(DIR_SRC)/old \
 		arkheia_main.native
 	@mkdir -p $(DIR_BIN)
