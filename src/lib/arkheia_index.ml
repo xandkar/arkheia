@@ -7,12 +7,16 @@ module RegExp = Arkheia_regexp
 module Utils  = Arkheia_utils
 
 
+type location =
+  { msg_id    : string
+  ; count     : int
+  ; positions : int list
+  }
+
+type word = string
+
 type t =
-  (string, (string * int * int list) list) Hashtbl.t
-
-
-let fst_of_triple = function
-  | fst, _, _ -> fst
+  (word, location list) Hashtbl.t
 
 
 let illegal_chars : char list =
@@ -76,14 +80,14 @@ let load (dir : string) : t =
 
 let build dir_index dir_messages msg_stream : unit =
   let write_word_data index msg_id (word, (count, positions)) =
-    let data = msg_id, count, positions in
+    let location = {msg_id; count; positions} in
 
     try
-      let old_data = Hashtbl.find index word in
-      Hashtbl.replace index word (data::old_data)
+      let locations = location :: (Hashtbl.find index word) in
+      Hashtbl.replace index ~key:word ~data:locations
 
     with Not_found ->
-      Hashtbl.add index word [data]
+      Hashtbl.add index word [location]
   in
 
   let process_message index msg_txt =
@@ -120,17 +124,20 @@ struct
 end
 
 let lookup (index : t) (query : string) : string list =
-  let ( |- ) f g x = g (f x) in
   try
     let words = Str.split RegExp.white_spaces query in
-    let msg_lists = List.map ~f:(fun w -> Hashtbl.find index w) words in
-    let msg_sets = List.map ~f:((List.map ~f:fst_of_triple) |- StrSet.of_list) msg_lists in
-
-    match msg_sets with
+    let locations_list = List.map ~f:(fun w -> Hashtbl.find index w) words in
+    let msg_ids_sets =
+      List.map locations_list ~f:(
+        fun locations ->
+          let msg_ids = List.map locations ~f:(fun l -> l.msg_id) in
+          StrSet.of_list msg_ids
+      )
+    in
+    match msg_ids_sets with
     | s::ss ->
       List.fold_left ~f:StrSet.inter ~init:s ss |> StrSet.elements
     | _ ->
       assert false
-
   with Not_found ->
     []
