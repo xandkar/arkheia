@@ -11,7 +11,7 @@ main() {
     for file in `ls -1 $ARCHIVE_DIR/*.gz`;
     do
         echo $file
-        time ./bin/arkheia \
+        time ./bin/arkheia_old \
             -data-dir $DATA_DIR \
             -list-name $LIST_NAME \
             -mbox-file $file \
