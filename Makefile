@@ -1,29 +1,21 @@
-EXT_LIBS="calendar,zip,cryptokit"
-
 DIR_BIN="bin"
 DIR_BUILD="_build"
-DIR_SRC_LIB="src/lib"
-DIR_SRC_APP="src/app"
+DIR_SRC="src"
 
-EXECUTABLE_NAME="arkheia"
-EXECUTABLE_TYPE="native"
-EXECUTABLE_LINK="$(EXECUTABLE_NAME)_main.$(EXECUTABLE_TYPE)"
-EXECUTABLE_TARGET="$(DIR_SRC_APP)/$(EXECUTABLE_LINK)"
-EXECUTABLE_FILE="$(DIR_BUILD)/$(EXECUTABLE_TARGET)"
-
-
-build:
-	@ocamlbuild -tag thread -use-ocamlfind -package $(EXT_LIBS) \
-	    -I $(DIR_SRC_LIB) $(EXECUTABLE_TARGET)
+build_old:
+	@ocamlbuild \
+		-tag thread \
+		-use-ocamlfind \
+		-package calendar,zip,cryptokit \
+		-I $(DIR_SRC)/old \
+		arkheia_main.native
 	@mkdir -p $(DIR_BIN)
-	@cp -f $(EXECUTABLE_FILE) $(DIR_BIN)/$(EXECUTABLE_NAME)
-	@rm -f $(EXECUTABLE_LINK)
-
+	@cp -f $(DIR_BUILD)/$(DIR_SRC)/old/arkheia_main.native $(DIR_BIN)/arkheia_old
+	@rm -f arkheia_main.native
 
 clean:
 	@rm -rf $(DIR_BIN)
 	@ocamlbuild -clean
-
 
 purge:
 	@rm -rf $(DIR_BIN)
