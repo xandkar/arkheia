@@ -9,6 +9,17 @@ Document archival and analysis.
 
 3 databases:
 
-1. Object storage: key = hash of raw document, value = raw document
-2. Meta data: table of descriptive fields and a document hash
-3. Index: key = token, value = list of locations
+#### Object storage (k/v)
+| Key                  | Value        |
+|----------------------|--------------|
+| hash of raw document | raw document |
+
+#### Meta data (relational)
+| Document             | Field-1  | .. | Field-N |
+|----------------------|----------|----|---------|
+| hash of raw document | datum-1  | .. | datum-N |
+
+#### Index (k/v)
+| Key   | Value            |
+|-------|------------------|
+| token | set of locations |
