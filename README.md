@@ -3,23 +3,30 @@
 
 Document archival and analysis.
 
-## Design ideas
+
+Design ideas
+------------
 
 ### Storage
+Component interfaces should be abstracted in such a way that initial
+implementation can use SQLite for everything, and later move to a Dynamo-style
+K/V store, like Riak.
 
-3 databases:
+doc-id = hash of document
 
-#### Object storage (k/v)
-| Key                  | Value        |
-|----------------------|--------------|
-| hash of raw document | raw document |
+3 collections:
 
-#### Meta data (relational)
-| Document             | Field-1  | .. | Field-N |
-|----------------------|----------|----|---------|
-| hash of raw document | datum-1  | .. | datum-N |
+#### Object storage
+| Key    | Value    |
+|--------|----------|
+| doc-id | document |
 
-#### Index (k/v)
-| Key   | Value            |
-|-------|------------------|
-| token | set of locations |
+#### Meta data
+| Document ID | Tag      | Value     |
+|-------------|----------|-----------|
+| doc-id      | tag-name | tag-value |
+
+#### Index
+Suffix tree. But how to store?
+Abstract in such a way that initial implementation can use SQLite and later can
+be swapped with an implementation of on-disk suffix tree.
